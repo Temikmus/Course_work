@@ -15,7 +15,31 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/resume/")
+def comparison_with_simliar_name(query, filters):
+    for column, value in filters.items():
+        if value:
+            query = query.filter(getattr(Resume, column).ilike(f"%{value}%"))
+    return query
+
+def comparison_with_simliar_names_and(query, filters):
+    for column, value in filters.items():
+        if value:
+            values_list = value.split(",")
+            conditions = [getattr(Resume, column).any(li) for li in values_list]
+            query = query.filter(and_(*conditions))
+    return query
+
+def comparison_with_simliar_names_or(query, filters):
+    for column, value in filters.items():
+        if value:
+            values_list = value.split(",")
+            conditions = [getattr(Resume, column).any(li) for li in values_list]
+            query = query.filter(or_(*conditions))
+    return query
+
+
+
+@router.get("/table/")
 def get_vacancies(
     specific_fields: str = Query(None, description="Выбор конкретных полей"),
     title: str = Query(None, description="Название профессии"),
@@ -51,6 +75,9 @@ def get_vacancies(
                                               description="Минимальное кол-во доп. образования"),
     max_count_additional_courses: int = Query(None,
                                               description="Максимальное кол-во доп. образования"),
+    not_null: str = Query(None, description="Столбцы, которые должны быть со значениями"),
+    sort_by: str = Query(None,
+                         description="Сортировка по полю (например, 'salary:asc' или 'title:desc')"),
     limit: int = Query(15, ge=1, le=100,
                        description="Количество вакансий для отображения (максимум 100)"),
     offset: int = Query(0, description="Смещение для пагинации"),
@@ -70,12 +97,30 @@ def get_vacancies(
                 raise HTTPException(status_code=400, detail=f"Поле '{field}' не существует")
         if selected_columns:
             query = query.with_entities(*selected_columns)
-
     #Фильтрация (если значение передано)
-    if title:
-        query = query.filter(Resume.title.ilike(f"%{title}%"))
-    if gender:
-        query = query.filter(Resume.gender.ilike(f"%{gender}%"))
+    columns_for_compare_with_similar_name = {
+        'title': title,
+        'gender': gender,
+        'currency': currency,
+        'level_education': level_education,
+    }
+    query = comparison_with_simliar_name(query, columns_for_compare_with_similar_name)
+
+    columns_for_compare_with_similar_names_and = {
+        'citizenship': citizenship,
+        'skill_set': skills,
+    }
+    query = comparison_with_simliar_names_and(query, columns_for_compare_with_similar_names_and)
+
+    columns_for_compare_with_similar_names_or = {
+        'university': university,
+        'professional_roles': professional_roles,
+        'employments': employments,
+        'schedules': schedules,
+        'experience': experience
+    }
+    query = comparison_with_simliar_names_or(query, columns_for_compare_with_similar_names_or)
+
     if min_age is not None:
         query = query.filter(Resume.age >= min_age)
     if max_age is not None:
@@ -124,40 +169,7 @@ def get_vacancies(
                 Resume.language_zho.in_([level for level, value in language_levels.items() if value <= max_level]))
         if conditions:
             query = query.filter(and_(*conditions))
-    if currency:
-        query = query.filter(Resume.currency.ilike(f"%{currency}%"))
-    if level_education:
-        query = query.filter(Resume.level_education.ilike(f"%{level_education}%"))
-    if citizenship:
-        citizenship_list = citizenship.split(",")
-        conditions = [Resume.citizenship.any(cit) for cit in citizenship_list]
-        query = query.filter(and_(*conditions))
-    if university:
-        university_list = university.split(",")
-        conditions = [Resume.university.any(uni) for uni in university_list]
-        query = query.filter(or_(*conditions))
-    if professional_roles:
-        professional_roles_list = professional_roles.split(",")
-        conditions = [Resume.professional_roles.any(pro) for pro in professional_roles_list]
-        query = query.filter(or_(*conditions))
-    if employments:
-        employments_list = employments.split(",")
-        conditions = [Resume.employments.any(emp) for emp in employments_list]
-        query = query.filter(or_(*conditions))
-    if schedules:
-        schedules_list = schedules.split(",")
-        conditions = [Resume.schedules.any(sch) for sch in schedules_list]
-        query = query.filter(or_(*conditions))
-    if experience:
-        experience_list = experience.split(",")
-        conditions = [Resume.experience.any(exp) for exp in experience_list]
-        query = query.filter(or_(*conditions))
-    if skills:
-        skills_list = skills.split(",")
-        conditions = [Resume.skill_set.any(skill) for skill in skills_list]
-        query = query.filter(and_(*conditions))
-    if address:
-        query = query.filter(Resume.area.ilike(f"%{address}%"))
+
     if published_after:
         try:
             published_after_date = datetime.strptime(published_after, "%Y-%m-%d")
@@ -214,6 +226,25 @@ def get_vacancies(
         query = query.filter(Resume.salary >= min_salary)
     if max_salary is not None:
         query = query.filter(Resume.salary <= max_salary)
+
+    if sort_by:
+        field, order = sort_by.split(":")
+        if hasattr(Resume, field):
+            column = getattr(Resume, field)
+            if order == "asc":
+                query = query.order_by(column.asc())
+            elif order == "desc":
+                query = query.order_by(column.desc())
+        else:
+            raise HTTPException(status_code=400, detail=f"Поле '{field}' не существует")
+
+    if not_null:
+        not_null_columns = not_null.split(",")
+        for column in not_null_columns:
+            if hasattr(Resume, column):
+                query = query.filter(getattr(Resume, column).isnot(None))
+            else:
+                raise HTTPException(status_code=400, detail=f"Поле '{column}' не существует.")
 
     total_count = query.count()
 
