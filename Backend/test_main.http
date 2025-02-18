@@ -1,11 +1,63 @@
 # Test your FastAPI endpoints
 
-GET http://127.0.0.1:8000/
+GET http://127.0.0.1:8000/vacancies/table/?filters=salary_to>=50000;min_experience<or:1~6;title=or:Аналитик данных~Data Scientist
 Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/hello/User
+GET http://127.0.0.1:8000/vacancies/table/?group_by=address&aggregates=address:count&sort_by=address:count:desc
 Accept: application/json
 
 ###
+
+GET http://127.0.0.1:8000/vacancies/table/?group_by=skills&aggregates=skills:count&sort_by=skills:count:desc
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?group_by=address&aggregates=salary_from:avg&sort_by=salary_from:avg:asc
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?group_by=address&aggregates=salary_from:avg,id:count&sort_by=salary_from:avg:desc
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?group_by=company_name&aggregates=company_name:count&sort_by=company_name:count:desc
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?specific_fields=skills&filters=skills==or:sql~excel
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?aggregates=salary_to:max
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?group_by=skills&sort_by=skills:desc
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?specific_fields=skills
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?filters=skills==or:sql~excel
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?filters=salary_from=100000
+Accept: application/json
+
+###
+
+
