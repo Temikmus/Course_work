@@ -469,3 +469,46 @@ button:active {
 .clear-btn:hover {
     background-color: #c0392b; /* Темнее красный при наведении */
 }
+
+/* Стили для календаря */
+.react-datepicker-wrapper {
+    display: inline-block;
+    width: auto;
+}
+
+.react-datepicker__input-container input {
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    outline: none;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s ease;
+}
+
+.react-datepicker__input-container input:focus {
+    border-color: #3498db;
+}
+
+.react-datepicker {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.react-datepicker__header {
+    background-color: #3498db;
+    color: #fff;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.react-datepicker__day--selected {
+    background-color: #3498db;
+    color: #fff;
+}
+
+.react-datepicker__day--keyboard-selected {
+    background-color: #2980b9;
+    color: #fff;
+}

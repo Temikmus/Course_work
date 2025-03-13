@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { fields, numericAggregations } from "./constants"; // Импортируем списки полей и агрегаций
+import { fields, numericFields, numericAggregations, nonNumericAggregations } from "./constants";
 
 const Aggregates = ({ aggregates, onApplyAggregates }) => {
     const [selectedColumn, setSelectedColumn] = useState(""); // Выбранный столбец
@@ -34,6 +34,15 @@ const Aggregates = ({ aggregates, onApplyAggregates }) => {
         onApplyAggregates(updatedAggregatesList.join(",")); // Обновляем агрегации в родительском компоненте
     };
 
+    // Получаем список агрегаций для выбранного столбца
+    const getAvailableAggregations = () => {
+        if (numericFields.includes(selectedColumn)) {
+            return numericAggregations; // Числовые агрегации для числовых полей
+        } else {
+            return nonNumericAggregations; // Нечисловые агрегации для остальных полей
+        }
+    };
+
     return (
         <div className="aggregates">
             <h3>Агрегации</h3>
@@ -57,7 +66,7 @@ const Aggregates = ({ aggregates, onApplyAggregates }) => {
                     onChange={(e) => setSelectedAggregation(e.target.value)}
                 >
                     <option value="">Выберите агрегацию</option>
-                    {numericAggregations.map((agg) => (
+                    {getAvailableAggregations().map((agg) => (
                         <option key={agg.value} value={agg.value}>
                             {agg.label}
                         </option>

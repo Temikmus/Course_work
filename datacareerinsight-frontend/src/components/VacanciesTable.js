@@ -23,6 +23,55 @@ const VacanciesTable = () => {
     const [resetTrigger, setResetTrigger] = useState(false);
     const [notNull, setNotNull] = useState("");
     const [limit, setLimit] = useState(8); // Значение по умолчанию = 8
+    const [visibleColumns, setVisibleColumns] = useState({}); // Состояние видимости столбцов
+
+    // Столбцы, которые должны быть скрыты по умолчанию
+    const hiddenColumnsByDefault = ["id", "currency", "experience", "archived", "url", "salary_to", "salary_from"];
+
+    // Инициализация видимости столбцов при первом рендере и при изменении данных
+    useEffect(() => {
+        if (vacancies.length > 0) {
+            const columns = Object.keys(vacancies[0]);
+            const initialVisibility = {};
+
+            columns.forEach((column) => {
+                // Если столбец уже был видим, оставляем его видимым
+                if (visibleColumns[column] !== undefined) {
+                    initialVisibility[column] = visibleColumns[column];
+                } else {
+                    // Новые столбцы делаем видимыми по умолчанию, кроме тех, что в hiddenColumnsByDefault
+                    initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
+                }
+            });
+
+            // Если есть группировка, делаем столбец группировки видимым
+            if (groupBy) {
+                initialVisibility[groupBy] = true;
+            }
+
+            setVisibleColumns(initialVisibility);
+        }
+    }, [vacancies, groupBy]);
+
+    // Сброс видимости столбцов при изменении resetTrigger
+    useEffect(() => {
+        if (vacancies.length > 0) {
+            const columns = Object.keys(vacancies[0]);
+            const initialVisibility = {};
+
+            columns.forEach((column) => {
+                // Сбрасываем видимость к значениям по умолчанию
+                initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
+            });
+
+            // Если есть группировка, делаем столбец группировки видимым
+            if (groupBy) {
+                initialVisibility[groupBy] = true;
+            }
+
+            setVisibleColumns(initialVisibility);
+        }
+    }, [resetTrigger]);
 
     const fetchVacancies = async (
         currentOffset,
@@ -237,7 +286,16 @@ const VacanciesTable = () => {
                 sortBy={sortBy}
             />
 
-            <DynamicTable data={vacancies} />
+            <DynamicTable
+                data={vacancies}
+                visibleColumns={visibleColumns}
+                onToggleColumn={(column) => {
+                    setVisibleColumns((prev) => ({
+                        ...prev,
+                        [column]: !prev[column],
+                    }));
+                }}
+            />
 
             {/* Новый компонент для лимита */}
             <LimitFilter

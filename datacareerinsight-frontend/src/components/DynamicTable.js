@@ -1,39 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-const DynamicTable = ({ data }) => {
-    const [visibleColumns, setVisibleColumns] = useState({});
+const DynamicTable = ({ data, visibleColumns, onToggleColumn }) => {
     const [showColumnMenu, setShowColumnMenu] = useState(false);
-
-    // Столбцы, которые должны быть скрыты по умолчанию
-    const hiddenColumnsByDefault = ["id", "currency", "experience", "archived", "url", "salary_to", "salary_from"];
-
-    // Инициализация видимости столбцов при первом рендере и при изменении данных
-    useEffect(() => {
-        if (data.length > 0) {
-            const columns = Object.keys(data[0]);
-            const initialVisibility = {};
-
-            columns.forEach((column) => {
-                // Если столбец уже был видим, оставляем его видимым
-                if (visibleColumns[column] !== undefined) {
-                    initialVisibility[column] = visibleColumns[column];
-                } else {
-                    // Новые столбцы делаем видимыми по умолчанию, кроме тех, что в hiddenColumnsByDefault
-                    initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
-                }
-            });
-
-            setVisibleColumns(initialVisibility);
-        }
-    }, [data]); // Зависимость от data
-
-    // Обработчик изменения видимости столбца
-    const handleColumnToggle = (column) => {
-        setVisibleColumns((prev) => ({
-            ...prev,
-            [column]: !prev[column],
-        }));
-    };
 
     if (data.length === 0) {
         return <div>Нет данных для отображения</div>;
@@ -58,7 +26,7 @@ const DynamicTable = ({ data }) => {
                                 <input
                                     type="checkbox"
                                     checked={visibleColumns[column]}
-                                    onChange={() => handleColumnToggle(column)}
+                                    onChange={() => onToggleColumn(column)}
                                 />
                                 {column.replace(/_/g, ' ').toUpperCase()}
                             </label>

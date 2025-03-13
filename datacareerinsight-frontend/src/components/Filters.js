@@ -1,10 +1,14 @@
-// Filters.jsx
-import React, { useState  } from "react";
+import React, { useState } from "react";
+import DatePicker from "react-datepicker"; // Импортируем календарь
+import "react-datepicker/dist/react-datepicker.css"; // Стили для календаря
 import {
     fields,
     operators,
     numericAggregations,
     nonNumericAggregations,
+    dateFields,
+    getFilteredOperators,
+    numericFields,
 } from "./constants";
 import { isNumericField } from "../utils/utils";
 
@@ -13,13 +17,24 @@ const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
     const [operator, setOperator] = useState("=");
     const [logic, setLogic] = useState("or");
     const [value, setValue] = useState("");
-
+    const [dateValue, setDateValue] = useState(null); // Состояние для выбранной даты
 
     // Обработчик выбора вспомогательного значения
     const handleHelperClick = (aggValue) => {
         if (field) {
             const formattedValue = `${aggValue}~${field}`;
             setValue(formattedValue);
+        }
+    };
+
+    // Обработчик изменения даты
+    const handleDateChange = (date) => {
+        setDateValue(date); // Сохраняем выбранную дату
+        if (date) {
+            const formattedDate = date.toISOString().split("T")[0]; // Преобразуем дату в формат YYYY-MM-DD
+            setValue(formattedDate); // Устанавливаем значение для фильтра
+        } else {
+            setValue(""); // Если дата не выбрана, очищаем значение
         }
     };
 
@@ -30,6 +45,23 @@ const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
             onAddFilter({ field, operator, logic, value: formattedValue });
             setField("");
             setValue("");
+            setDateValue(null); // Сбрасываем выбранную дату
+        }
+    };
+
+    // Получаем отфильтрованные операторы для выбранного поля
+    const filteredOperators = getFilteredOperators(field);
+
+    // Получаем доступные агрегации для выбранного поля
+    const getAvailableAggregations = () => {
+        if (numericFields.includes(field)) {
+            // Оставляем только нужные агрегации для числовых полей
+            return numericAggregations.filter(agg =>
+                ["avg", "max", "min", "median", "mode"].includes(agg.value)
+            );
+        } else {
+            // Для нечисловых полей убираем "Количество" (count)
+            return nonNumericAggregations.filter(agg => agg.value !== "count");
         }
     };
 
@@ -61,32 +93,46 @@ const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
 
                 {/* Оператор сравнения */}
                 <select value={operator} onChange={(e) => setOperator(e.target.value)}>
-                    {operators.map((op) => (
+                    {filteredOperators.map((op) => (
                         <option key={op.value} value={op.value}>
                             {op.label}
                         </option>
                     ))}
                 </select>
 
-                {/* Логика (AND/OR) */}
-                <select value={logic} onChange={(e) => setLogic(e.target.value)}>
-                    <option value="or">Или</option>
-                    <option value="and">И</option>
-                </select>
+                {/* Логика (AND/OR) - скрываем для published_at */}
+                {!dateFields.includes(field) && (
+                    <select value={logic} onChange={(e) => setLogic(e.target.value)}>
+                        <option value="or">Или</option>
+                        <option value="and">И</option>
+                    </select>
+                )}
 
                 {/* Ввод значения */}
-                <input
-                    type="text"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder="Значения (через запятую)"
-                />
+                {dateFields.includes(field) ? (
+                    // Календарь для выбора даты
+                    <DatePicker
+                        selected={dateValue}
+                        onChange={handleDateChange}
+                        dateFormat="yyyy-MM-dd"
+                        placeholderText="Выберите дату"
+                        className="date-picker-input"
+                    />
+                ) : (
+                    // Текстовое поле для других значений
+                    <input
+                        type="text"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        placeholder="Значения (через запятую)"
+                    />
+                )}
 
                 {/* Вспомогательные значения */}
                 <div className="helper-buttons">
                     {field && (
                         <>
-                            {(isNumericField(field) ? numericAggregations : nonNumericAggregations).map((agg) => (
+                            {getAvailableAggregations().map((agg) => (
                                 <button
                                     key={agg.value}
                                     onClick={() => handleHelperClick(agg.value)}

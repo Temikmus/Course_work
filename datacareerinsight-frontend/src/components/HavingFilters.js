@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { operators } from "./constants"; // Импортируем операторы
 
 const HavingFilters = ({ aggregates, onAddHavingFilter, onRemoveHavingFilter, havingFilters }) => {
     const [column, setColumn] = useState(""); // Выбранный столбец
@@ -18,6 +19,9 @@ const HavingFilters = ({ aggregates, onAddHavingFilter, onRemoveHavingFilter, ha
             }
         }
     };
+
+    // Убираем оператор "Содержит" (==) для HAVING
+    const filteredOperators = operators.filter(op => op.value !== "==");
 
     return (
         <div className="having-filters">
@@ -51,12 +55,11 @@ const HavingFilters = ({ aggregates, onAddHavingFilter, onRemoveHavingFilter, ha
                     value={operator}
                     onChange={(e) => setOperator(e.target.value)}
                 >
-                    <option value=">">{">"}</option>
-                    <option value="<">{"<"}</option>
-                    <option value="=">{"="}</option>
-                    <option value=">=">{">="}</option>
-                    <option value="<=">{"<="}</option>
-                    <option value="!=">{"!="}</option>
+                    {filteredOperators.map((op) => (
+                        <option key={op.value} value={op.value}>
+                            {op.label} {/* Отображаем текстовую метку (например, "Больше") */}
+                        </option>
+                    ))}
                 </select>
 
                 <input
