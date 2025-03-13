@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fields } from "./constants"; // Импортируем список полей
 
-const GroupBy = ({ groupBy, onApplyGroupBy, onClearGroupBy }) => {
+const GroupBy = ({ groupBy, onApplyGroupBy, onClearGroupBy, resetTrigger }) => {
     const [showColumnMenu, setShowColumnMenu] = useState(false); // Состояние для отображения меню
     const [selectedColumns, setSelectedColumns] = useState([]); // Выбранные столбцы
 
@@ -13,6 +13,11 @@ const GroupBy = ({ groupBy, onApplyGroupBy, onClearGroupBy }) => {
             setSelectedColumns([]); // Если groupBy пустой, сбрасываем выбранные столбцы
         }
     }, [groupBy]);
+
+    // Сброс состояния showColumnMenu при изменении resetTrigger
+    useEffect(() => {
+        setShowColumnMenu(false); // Скрываем меню
+    }, [resetTrigger]);
 
     // Обработчик изменения выбранных столбцов
     const handleColumnToggle = (column) => {
@@ -34,6 +39,7 @@ const GroupBy = ({ groupBy, onApplyGroupBy, onClearGroupBy }) => {
     // Обработчик очистки группировки
     const handleClearGroupBy = () => {
         setSelectedColumns([]); // Сбрасываем выбранные столбцы
+        setShowColumnMenu(false); // Сбрасываем состояние меню (скрываем его)
         onClearGroupBy(); // Вызываем обработчик очистки
     };
 

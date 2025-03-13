@@ -19,6 +19,7 @@ const VacanciesTable = () => {
     const [aggregates, setAggregates] = useState("");
     const [havingFilters, setHavingFilters] = useState([]);
     const [sortBy, setSortBy] = useState("");
+    const [resetTrigger, setResetTrigger] = useState(false); // Триггер для сброса состояния
 
     const fetchVacancies = async (currentOffset, currentFilters, currentGroupBy, currentAggregates, currentHavingFilters, currentSortBy) => {
         try {
@@ -114,6 +115,7 @@ const VacanciesTable = () => {
         setHavingFilters([]); // Очищаем HAVING-фильтры
         setSortBy(""); // Очищаем сортировку
         setOffset(0); // Сбрасываем пагинацию
+        setResetTrigger((prev) => !prev); // Изменяем триггер для сброса
         fetchVacancies(0, [], "", "", [], ""); // Делаем запрос без параметров
     };
 
@@ -146,9 +148,10 @@ const VacanciesTable = () => {
             />
 
             <GroupBy
-                groupBy={groupBy} // Передаем текущее значение группировки
+                groupBy={groupBy}
                 onApplyGroupBy={handleApplyGroupBy}
                 onClearGroupBy={handleClearGroupBy}
+                resetTrigger={resetTrigger} // Передаем триггер для сброса
             />
 
             <Aggregates
