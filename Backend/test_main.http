@@ -130,6 +130,12 @@ Accept: application/json
 
 ###
 
+GET http://127.0.0.1:8000/vacancies/table/?specific_fields=russian_salary_from,url,company_name,address
+Accept: application/json
+
+
+###
+
 GET http://127.0.0.1:8000/vacancies/table/?specific_fields=russian_salary_to&filters=russian_salary_to=100000
 Accept: application/json
 

@@ -21,20 +21,20 @@ const NotNullFilter = ({ notNull, onApplyNotNullFilter, resetTrigger }) => {
 
     // Обработчик изменения выбранных столбцов
     const handleColumnToggle = (column) => {
+        let updatedColumns;
         if (selectedColumns.includes(column)) {
-            setSelectedColumns(selectedColumns.filter((col) => col !== column));
+            updatedColumns = selectedColumns.filter((col) => col !== column); // Удаляем столбец
         } else {
-            setSelectedColumns([...selectedColumns, column]);
+            updatedColumns = [...selectedColumns, column]; // Добавляем столбец
         }
+        setSelectedColumns(updatedColumns); // Обновляем состояние
+        onApplyNotNullFilter(updatedColumns.join(",")); // Применяем изменения к запросу
     };
 
-    // Обработчик применения фильтра not_null
-    const handleApplyNotNullFilter = () => {
-        if (selectedColumns.length > 0) {
-            const notNullValue = selectedColumns.join(",");
-            onApplyNotNullFilter(notNullValue); // Передаем значение в родительский компонент
-            setShowColumnMenu(false); // Скрываем меню после применения
-        }
+    // Обработчик очистки фильтров
+    const handleClearFilters = () => {
+        setSelectedColumns([]); // Сбрасываем выбранные столбцы
+        onApplyNotNullFilter(""); // Очищаем фильтр в родительском компоненте
     };
 
     return (
@@ -44,6 +44,11 @@ const NotNullFilter = ({ notNull, onApplyNotNullFilter, resetTrigger }) => {
             {/* Кнопка для отображения меню выбора столбцов */}
             <button onClick={() => setShowColumnMenu(!showColumnMenu)}>
                 {showColumnMenu ? "Скрыть столбцы" : "Выбрать столбцы"}
+            </button>
+
+            {/* Кнопка очистки фильтров */}
+            <button onClick={handleClearFilters} className="clear-btn">
+                Очистить фильтры
             </button>
 
             {/* Выпадающее меню с чекбоксами */}
@@ -61,9 +66,6 @@ const NotNullFilter = ({ notNull, onApplyNotNullFilter, resetTrigger }) => {
                     ))}
                 </div>
             )}
-
-            {/* Кнопка применения фильтра not_null */}
-            <button onClick={handleApplyNotNullFilter}>Применить фильтр</button>
 
             {/* Отображение выбранных столбцов */}
             <div className="selected-columns">

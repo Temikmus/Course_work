@@ -19,23 +19,19 @@ const Aggregates = ({ aggregates, onApplyAggregates }) => {
     const handleAddAggregate = () => {
         if (selectedColumn && selectedAggregation) {
             const newAggregate = `${selectedColumn}:${selectedAggregation}`;
-            setAggregatesList([...aggregatesList, newAggregate]); // Добавляем в список
+            const updatedAggregatesList = [...aggregatesList, newAggregate];
+            setAggregatesList(updatedAggregatesList); // Добавляем в список
             setSelectedColumn(""); // Сбрасываем выбор столбца
             setSelectedAggregation(""); // Сбрасываем выбор агрегации
+            onApplyAggregates(updatedAggregatesList.join(",")); // Обновляем агрегации в родительском компоненте
         }
     };
 
     // Обработчик удаления агрегации
     const handleRemoveAggregate = (index) => {
-        setAggregatesList(aggregatesList.filter((_, i) => i !== index));
-    };
-
-    // Обработчик применения агрегаций
-    const handleApplyAggregates = () => {
-        if (aggregatesList.length > 0) {
-            const aggregatesString = aggregatesList.join(",");
-            onApplyAggregates(aggregatesString); // Передаем строку агрегаций в родительский компонент
-        }
+        const updatedAggregatesList = aggregatesList.filter((_, i) => i !== index);
+        setAggregatesList(updatedAggregatesList); // Удаляем из списка
+        onApplyAggregates(updatedAggregatesList.join(",")); // Обновляем агрегации в родительском компоненте
     };
 
     return (
@@ -80,9 +76,6 @@ const Aggregates = ({ aggregates, onApplyAggregates }) => {
                     </div>
                 ))}
             </div>
-
-            {/* Кнопка применения агрегаций */}
-            <button onClick={handleApplyAggregates}>Применить агрегации</button>
         </div>
     );
 };

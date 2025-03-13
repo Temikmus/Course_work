@@ -1,24 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const DynamicTable = ({ data }) => {
     const [visibleColumns, setVisibleColumns] = useState({});
     const [showColumnMenu, setShowColumnMenu] = useState(false);
 
-    if (data.length === 0) {
-        return <div>Нет данных для отображения</div>;
-    }
+    // Столбцы, которые должны быть скрыты по умолчанию
+    const hiddenColumnsByDefault = ["id", "currency", "experience", "archived", "url", "salary_to", "salary_from"];
 
-    // Определяем столбцы на основе ключей первого элемента
-    const columns = Object.keys(data[0]);
+    // Инициализация видимости столбцов при первом рендере и при изменении данных
+    useEffect(() => {
+        if (data.length > 0) {
+            const columns = Object.keys(data[0]);
+            const initialVisibility = {};
 
-    // Инициализируем видимость столбцов при первом рендере
-    if (Object.keys(visibleColumns).length === 0) {
-        const initialVisibility = {};
-        columns.forEach((column) => {
-            initialVisibility[column] = true; // По умолчанию все столбцы видимы
-        });
-        setVisibleColumns(initialVisibility);
-    }
+            columns.forEach((column) => {
+                // Если столбец уже был видим, оставляем его видимым
+                if (visibleColumns[column] !== undefined) {
+                    initialVisibility[column] = visibleColumns[column];
+                } else {
+                    // Новые столбцы делаем видимыми по умолчанию, кроме тех, что в hiddenColumnsByDefault
+                    initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
+                }
+            });
+
+            setVisibleColumns(initialVisibility);
+        }
+    }, [data]); // Зависимость от data
 
     // Обработчик изменения видимости столбца
     const handleColumnToggle = (column) => {
@@ -27,6 +34,13 @@ const DynamicTable = ({ data }) => {
             [column]: !prev[column],
         }));
     };
+
+    if (data.length === 0) {
+        return <div>Нет данных для отображения</div>;
+    }
+
+    // Определяем столбцы на основе ключей первого элемента
+    const columns = Object.keys(data[0]);
 
     return (
         <div className="dynamic-table-container">

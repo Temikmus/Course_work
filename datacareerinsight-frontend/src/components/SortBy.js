@@ -39,22 +39,18 @@ const SortBy = ({ columns, onApplySortBy, sortBy }) => {
                 ? formatAggregatedColumn(selectedColumn) // Форматируем агрегированный столбец
                 : selectedColumn; // Оставляем обычный столбец как есть
             const sortCondition = `${formattedColumn}:${sortOrder}`;
-            setSortConditions([...sortConditions, sortCondition]); // Добавляем условие в список
+            const updatedSortConditions = [...sortConditions, sortCondition];
+            setSortConditions(updatedSortConditions); // Добавляем условие в список
             setSelectedColumn(""); // Сбрасываем выбор столбца
+            onApplySortBy(updatedSortConditions.join(",")); // Обновляем сортировку в родительском компоненте
         }
     };
 
     // Обработчик удаления условия сортировки
     const handleRemoveSortCondition = (index) => {
-        setSortConditions(sortConditions.filter((_, i) => i !== index));
-    };
-
-    // Обработчик применения сортировки
-    const handleApplySortBy = () => {
-        if (sortConditions.length > 0) {
-            const sortByString = sortConditions.join(",");
-            onApplySortBy(sortByString); // Передаем строку сортировки в родительский компонент
-        }
+        const updatedSortConditions = sortConditions.filter((_, i) => i !== index);
+        setSortConditions(updatedSortConditions); // Удаляем условие из списка
+        onApplySortBy(updatedSortConditions.join(",")); // Обновляем сортировку в родительском компоненте
     };
 
     return (
@@ -95,9 +91,6 @@ const SortBy = ({ columns, onApplySortBy, sortBy }) => {
 
                 <button onClick={handleAddSortCondition}>Добавить условие</button>
             </div>
-
-            {/* Кнопка применения сортировки */}
-            <button onClick={handleApplySortBy}>Применить сортировку</button>
         </div>
     );
 };
