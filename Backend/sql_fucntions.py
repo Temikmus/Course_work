@@ -1,7 +1,7 @@
 import re
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_, cast, case
+from sqlalchemy import func, and_, or_, cast, case, nulls_last
 from database import SessionLocal
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import ARRAY, VARCHAR
@@ -9,6 +9,128 @@ from sqlalchemy.types import String, DateTime, Date, ARRAY
 from sqlalchemy.sql.functions import percentile_cont
 from sqlalchemy.sql.expression import select
 import logging
+
+def apply_time_interval_grouping(query, column_name, interval, base_model):
+    """
+    Группирует данные по временным интервалам (day, week, month, year).
+    """
+    column_attr = getattr(base_model, column_name, None)
+    if not column_attr:
+        raise HTTPException(status_code=400, detail=f"Поле '{column_name}' не найдено")
+
+    interval_mapping = {
+        "day": func.date_trunc("day", column_attr),
+        "week": func.date_trunc("week", column_attr),
+        "month": func.date_trunc("month", column_attr),
+        "year": func.date_trunc("year", column_attr)
+    }
+
+    if interval not in interval_mapping:
+        raise HTTPException(status_code=400, detail=f"Неверный интервал '{interval}'. Доступны: day, week, month, year")
+
+    grouped_column = interval_mapping[interval].label(f"{column_name}_{interval}")
+    query = query.with_entities(grouped_column)
+
+    return query, grouped_column
+
+
+def generate_chart_data_structure(results, x_axis, y_axis, chart_type):
+    """
+    Преобразует результат SQL-запроса в структуру для графика.
+    """
+    response = []
+
+    for row in results:
+        row_dict = {x_axis: row[0]}
+        if y_axis:
+            row_dict[y_axis] = row[1]
+        response.append(row_dict)
+
+    return {
+        "chart_type": chart_type,
+        "x_axis": x_axis,
+        "y_axis": y_axis if y_axis else None,
+        "data": response
+    }
+
+
+# Разбор строки having (например, 'salary_to:avg>50000~id:count>2')
+def parse_having(having_str):
+    """
+    Преобразует строку HAVING в словарь.
+    Пример:
+        Вход: "salary_from:avg>50000;id:count<100"
+        Выход: { "salary_from": ("avg", ">", "50000"), "id": ("count", "<", "100") }
+    """
+    having_conditions = {}
+
+    if not having_str:
+        return having_conditions
+
+    conditions = having_str.split("~")
+    pattern = re.compile(r"^(\w+):(\w+)([><=!]+)(.+)$")
+
+    for condition in conditions:
+        match = pattern.match(condition.strip())
+        if not match:
+            raise HTTPException(status_code=400, detail=f"Некорректный формат HAVING: '{condition}'")
+
+        column, agg_func, operator, value = match.groups()
+        having_conditions[column] = (agg_func.lower(), operator, value.strip())
+
+    return having_conditions
+
+from sqlalchemy import func
+
+aggregate_funcs = {
+    "avg": func.avg,  # Среднее значение
+    "sum": func.sum,  # Сумма
+    "max": func.max,  # Максимальное значение
+    "min": func.min,  # Минимальное значение
+    "count": func.count,  # Подсчет элементов
+    "median": lambda col: func.percentile_cont(0.5).within_group(col),  # Медиана
+    "stddev": func.stddev,  # Стандартное отклонение
+    "variance": func.variance,  # Дисперсия
+    "distinct_count": func.count(distinct=True),  # Количество уникальных значений
+    "mode": lambda col: func.mode().within_group(col),  # Мода
+}
+
+# Применяем HAVING после группировки
+def apply_having(query, having_str, aggregate_columns, vacancy_model):
+    """
+    Применяет HAVING-фильтрацию к агрегированным данным.
+    """
+    having_conditions = parse_having(having_str)
+
+    having_filters = []
+    for column, (agg_func, operator, value) in having_conditions.items():
+        column_attr = getattr(vacancy_model, column, None)
+        if not column_attr or agg_func not in aggregate_funcs:
+            raise HTTPException(status_code=400, detail=f"Некорректный HAVING '{column}:{agg_func}{operator}{value}'")
+
+        # Определяем агрегированную колонку
+        agg_column = aggregate_funcs[agg_func](column_attr)
+
+        # Проверяем оператор
+        operators = {
+            ">": agg_column > value,
+            ">=": agg_column >= value,
+            "<": agg_column < value,
+            "<=": agg_column <= value,
+            "=": agg_column == value,
+            "!=": agg_column != value,
+        }
+
+        if operator not in operators:
+            raise HTTPException(status_code=400, detail=f"Оператор '{operator}' не поддерживается")
+
+        having_filters.append(operators[operator])
+
+    if having_filters:
+        query = query.having(and_(*having_filters))
+
+    return query
+
 
 
 # Добавление столбцов в результат (столбцы, которые будут в таблице при выводе)
@@ -35,6 +157,8 @@ def parse_filters(filters):
     'title': ('=', ['Data', 'Analyst', 'Scientist'], 'or')
     }
 
+    "salary_to>avg~salary_to"
+    {'salary_to': ('>', ['avg', 'salary_to'], 'and')}
     """
     result = {}
     if not filters:
@@ -117,6 +241,32 @@ def apply_compare_filter_for_array_column(query: Query, column: str, values, ope
         logging.error(f"Error array_column: '{e}")
         raise
 
+# Функция для выполнения агрегации и получения одного значения
+def find_aggregate_value(query, column_name, aggregate_func, base_model):
+    """
+    Применяет агрегирующую функцию к указанному столбцу.
+
+    :param query: Исходный объект query.
+    :param column_name: Имя столбца (например, "salary").
+    :param aggregate_func: Агрегирующая функция (например, "max", "min", "avg").
+    :return: Результат агрегации.
+    """
+    # Получаем атрибут столбца из модели
+    column_attr = getattr(base_model, column_name, None)
+    if column_attr is None:
+        raise ValueError(f"Столбец '{column_name}' не существует в модели Vacancy.")
+
+    # Получаем агрегирующую функцию
+    if aggregate_func not in aggregate_funcs:
+        raise ValueError(f"Агрегирующая функция '{aggregate_func}' не поддерживается.")
+
+    # Применяем агрегирующую функцию к столбцу
+    agg_func = aggregate_funcs[aggregate_func](column_attr)
+
+    # Выполняем запрос
+    result = query.with_entities(agg_func).scalar()
+    return result
+
 #Применяем фильтр для столбца с одним значением
 def apply_compare_filter_for_column_with_one_value(query: Query, column: str, values, operator: str, separator: str, base_model):
     column_attr = getattr(base_model, column, None)
@@ -124,6 +274,9 @@ def apply_compare_filter_for_column_with_one_value(query: Query, column: str, va
         raise ValueError(f"Столбец '{column}' не существует в модели Vacancy")
     try:
         # Проверка типа столбца
+        if len(values)==2:
+            if values[0] in aggregate_funcs:
+                values = [find_aggregate_value(query, values[1], values[0], base_model)]
         item_type = column_attr.type
         if isinstance(item_type, String):
             # Для строк добавляем оператор для нечувствительного сравнения подстроки
@@ -162,7 +315,6 @@ def apply_compare_filter_for_column_with_one_value(query: Query, column: str, va
 
         # Преобразуем значения в соответствующие фильтры
         conditions = [operators[operator](value) for value in values]
-
         # Логическое объединение (OR или AND)
         if separator == "or":
             condition = or_(*conditions)  # OR
@@ -177,7 +329,6 @@ def apply_compare_filter_for_column_with_one_value(query: Query, column: str, va
 
 def apply_filter_for_column(query: Query, column: str, values, operator: str, separator: str, base_model):
     column_model = getattr(base_model, column)
-    # Если поле является массивом, добавляем его в GROUP BY
     if isinstance(column_model.type, ARRAY):
         query = apply_compare_filter_for_array_column(query, column, values, operator, separator, base_model)
     else:
@@ -211,59 +362,6 @@ def find_group_columns(group_by, base_model):
 
 
 
-# Создаем расширенный словарь агрегатных функций
-aggregate_funcs = {
-    "avg": func.avg,  # Среднее значение
-    "sum": func.sum,  # Сумма
-    "max": func.max,  # Максимальное значение
-    "min": func.min,  # Минимальное значение
-    "count": func.count,  # Подсчет элементов
-    "median": lambda col: func.percentile_cont(0.5).within_group(col),  # Медиана
-    "stddev": func.stddev,  # Стандартное отклонение
-    "variance": func.variance,  # Дисперсия
-    "group_concat": func.string_agg,  # Конкатенация строк
-    "distinct_count": func.count(distinct=True),  # Количество уникальных значений
-    "array_agg": func.array_agg,  # Агрегировать в массив
-    "mode": lambda col: func.mode().within_group(col),  # Мода
-    "first": func.first,  # Первый элемент
-    "last": func.last,  # Последний элемент
-    "sum_distinct": lambda col: func.sum(func.distinct(col)),  # Сумма уникальных значений
-    "corr": func.corr,  # Коэффициент корреляции Пирсона
-    "covar_pop": func.covar_pop,  # Совокупная дисперсия
-    "covar_samp": func.covar_samp,  # Выборочная дисперсия
-    "regr_slope": func.regr_slope,  # Наклон регрессионной линии
-    "regr_intercept": func.regr_intercept,  # Перехват регрессионной линии
-    "regr_r2": func.regr_r2,  # Коэффициент детерминации
-    "rank": func.rank,  # Ранг
-    "dense_rank": func.dense_rank,  # Плотный ранг
-    "row_number": func.row_number,  # Номер строки
-    "ntile": func.ntile,  # Разбиение на N групп
-    "json_agg": func.json_agg,  # Агрегировать данные в JSON
-    "jsonb_agg": func.jsonb_agg,  # Агрегировать данные в JSONB (PostgreSQL)
-    "json_build_object": func.json_build_object,  # Построение JSON-объекта
-    "jsonb_build_object": func.jsonb_build_object,  # Построение JSONB-объекта (PostgreSQL)
-    "array_length": func.array_length,  # Длина массива
-    "array_dims": func.array_dims,  # Размерность массива
-    "string_agg": func.string_agg,  # Конкатенация строк с разделителем
-    "upper": func.upper,  # Преобразование в верхний регистр
-    "lower": func.lower,  # Преобразование в нижний регистр
-    "trim": func.trim,  # Удаление пробелов с обеих сторон
-    "length": func.length,  # Длина строки
-    "concat": func.concat,  # Конкатенация строк
-    "now": func.now,  # Текущее время
-    "current_timestamp": func.current_timestamp,  # Текущее время (timestamp)
-    "date_trunc": func.date_trunc,  # Округление даты
-    "age": func.age,  # Разница между датами (возраст)
-    "extract": func.extract,  # Извлечение части даты
-    "date_part": func.date_part,  # Части даты
-    "to_char": func.to_char,  # Преобразование в строку (формат даты/времени)
-    "date": func.date,  # Преобразование даты в другой формат
-    "to_date": func.to_date,  # Преобразование строки в дату
-    "to_timestamp": func.to_timestamp,  # Преобразование строки в timestamp
-    "coalesce": func.coalesce,  # Возвращает первый ненулевой аргумент
-    "nullif": func.nullif,  # Возвращает null, если два значения равны
-}
-
 def find_aggregate_columns_for_group_by(aggregates, base_model):
     selected_aggregates = []
     if aggregates:
@@ -294,29 +392,42 @@ def apply_sorting_of_table(query, group_columns, selected_aggregates, sort_by, b
     try:
         if sort_by:
             sort_fields = sort_by.split(",")
+            sort_expressions = []
+
             for sort in sort_fields:
                 parts = sort.split(":")
                 if len(parts) == 2:  # Обычная сортировка
                     field, order = parts
-                    if hasattr(base_model, field):
-                        column = getattr(base_model, field)
-                        if isinstance(column.type, ARRAY):
-                            unnest_column = func.unnest(column).label(field)
-                            group_columns.append(unnest_column)
-                    else:
+
+                    if not hasattr(base_model, field):
                         raise HTTPException(status_code=400, detail=f"Поле '{field}' не найдено для сортировки")
-                elif len(parts) == 3:  # Агрегатная сортировка
+
+                    column = getattr(base_model, field)
+
+                    if isinstance(column.property.columns[0].type, ARRAY):
+                        # Если это массив, разворачиваем с unnest()
+                        unnest_column = func.unnest(column).label(field)
+                        group_columns.append(unnest_column)
+                        sort_expressions.append(nulls_last(unnest_column.desc() if order == "desc" else unnest_column.asc()))
+                    else:
+                        # Применяем NULLS LAST для сортировки по обычным полям
+                        sort_expressions.append(nulls_last(column.desc() if order == "desc" else column.asc()))
+
+                elif len(parts) == 3:  # Агрегатная сортировка (например, salary:avg:desc)
                     field, agg_type, order = parts
                     agg_label = f"{field}_{agg_type}"
                     matching_aggregates = [agg for agg in selected_aggregates if agg.key == agg_label]
-                    if matching_aggregates:
-                        column = matching_aggregates[0]
-                    else:
+
+                    if not matching_aggregates:
                         raise HTTPException(status_code=400, detail=f"Агрегат '{agg_label}' не найден")
+
+                    column = matching_aggregates[0]
+                    sort_expressions.append(nulls_last(column.desc() if order == "desc" else column.asc()))
+
                 else:
                     raise HTTPException(status_code=400, detail=f"Некорректный формат сортировки: '{sort}'")
 
-                query = query.order_by(column.desc() if order == "desc" else column.asc())
+            query = query.order_by(*sort_expressions)
 
         if group_columns:
             query = query.group_by(*group_columns)
@@ -328,6 +439,19 @@ def apply_sorting_of_table(query, group_columns, selected_aggregates, sort_by, b
 
 
 
+def apply_not_null_for_columns(query, not_null_columns, base_model):
+    if not_null_columns:
+        not_null_columns = not_null_columns.split(",")
+        for column in not_null_columns:
+            if hasattr(base_model, column):
+                # Получаем атрибут столбца из модели
+                column_attr = getattr(base_model, column)
+                # Фильтруем, чтобы значение не было None и не было пустым списком
+                query = query.filter(column_attr.isnot(None))  # Значение не равно None
 
-
-
+                if isinstance(column_attr.property.columns[0].type, ARRAY):
+                    # Если это массив, то он не должен быть равен []
+                    query = query.filter(func.array_length(column_attr, 1) > 0)
+            else:
+                raise HTTPException(status_code=400, detail=f"Поле '{column}' не существует.")
+    return query

@@ -13,7 +13,6 @@ class Vacancy(Base):
     experience = Column(String, nullable=True)  # Опыт работы
     type_of_employment = Column(String, nullable=True)  # Тип занятости
     work_format = Column(String, nullable=True)  # Формат работы
-    description = Column(Text, nullable=True)  # Описание вакансии
     skills = Column(ARRAY(String), nullable=True)  # Навыки
     address = Column(String, nullable=True)  # Адрес
     published_at = Column(DateTime)  # Время публикации
@@ -23,6 +22,8 @@ class Vacancy(Base):
     max_experience = Column(Integer, nullable=True)  # Максимальный опыт
     salary_to = Column(Integer, nullable=True)  # Максимальная зарплата
     salary_from = Column(Integer, nullable=True)  # Минимальная зарплата
+    russian_salary_to = Column(Integer, nullable=True)  # Максимальная зарплата в рублях
+    russian_salary_from = Column(Integer, nullable=True)  # Минимальная зарплата в рублях
     bonus = Column(Integer, nullable=True)  # Премия
 
 class Resume(Base):
@@ -35,6 +36,7 @@ class Resume(Base):
     age = Column(Integer, nullable=True)  # Возраст
     gender = Column(Text, nullable=True)  # Пол
     salary = Column(Numeric, nullable=True)  # Зарплата
+    russian_salary = Column(Numeric, nullable=True)  # Зарплата в рублях
     currency = Column(Text, nullable=True)  # Валюта
     photo = Column(Boolean)  # Наличие фото
     total_experience = Column(Integer, nullable=True)  # Общий опыт работы
@@ -52,3 +54,6 @@ class Resume(Base):
     is_driver = Column(Boolean, nullable=True)  # Наличие водительских прав
     professional_roles = Column(ARRAY(Text), nullable=True)  # Профессиональные роли (массив)
     url = Column(Text)  # Ссылка на резюме
+
+
+
