@@ -1,132 +1,63 @@
 /* Основные стили для контейнера таблицы */
 .vacancies-table-container {
-    font-family: Arial, sans-serif;
-    max-width: 100%; /* Занимает всю доступную ширину */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    overflow-x: auto; /* Горизонтальная прокрутка, если контент не помещается */
-    position: relative; /* Для корректного позиционирования выпадающих меню */
-}
-
-/* Контейнер для таблицы */
-.dynamic-table-container {
-    width: 100%;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     overflow-x: auto;
 }
 
-/* Кнопка для управления столбцами */
-.column-toggle {
-    margin-bottom: 10px;
-    position: relative; /* Для позиционирования выпадающего меню */
-}
-
-.column-toggle button {
-    padding: 8px 16px;
-    font-size: 14px;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.column-toggle button:hover {
-    background-color: #0056b3;
-}
-
-/* Выпадающее меню с чекбоксами */
-.column-menu {
-    position: absolute;
-    top: 100%; /* Позиционируем меню под кнопкой */
-    left: 0;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000; /* Убедимся, что меню поверх других элементов */
-    margin-top: 5px; /* Небольшой отступ от кнопки */
-    width: 200px; /* Фиксированная ширина для удобства */
-}
-
-.column-menu-item {
-    display: block;
-    margin: 5px 0;
-    font-size: 14px;
-    color: #333;
-}
-
-.column-menu-item input {
-    margin-right: 8px;
-}
-
-/* Стили для таблицы */
-.dynamic-table {
-    width: 100%;
-    border-collapse: collapse;
+/* Заголовок страницы */
+.vacancies-table-container h1 {
+    font-size: 28px;
+    color: #2c3e50;
     margin-bottom: 20px;
-    overflow-x: auto; /* Горизонтальная прокрутка для таблицы */
-    display: block; /* Для корректной работы прокрутки */
+    font-weight: 600;
 }
 
-.dynamic-table th,
-.dynamic-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-    white-space: nowrap; /* Запрет переноса текста в ячейках */
-}
-
-.dynamic-table th {
-    background-color: #007bff;
-    color: #fff;
-    font-weight: bold;
-}
-
-.dynamic-table tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* Стили для пагинации */
-.pagination {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-}
-
-.pagination-btn {
+/* Общий стиль для всех кнопок */
+button {
     padding: 10px 20px;
     font-size: 14px;
-    color: #fff;
-    background-color: #007bff;
+    font-weight: 500;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.pagination-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+button:hover {
+    transform: translateY(-1px);
 }
 
-.pagination-btn:hover:not(:disabled) {
-    background-color: #0056b3;
+button:active {
+    transform: translateY(0);
+}
+
+/* Кнопка сброса */
+.reset-btn {
+    background-color: #e74c3c;
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.reset-btn:hover {
+    background-color: #c0392b;
 }
 
 /* Стили для фильтров */
 .filters {
-    margin-bottom: 20px;
+    margin-bottom: 30px;
 }
 
 .filters h3 {
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 10px;
+    font-size: 20px;
+    color: #34495e;
+    margin-bottom: 15px;
+    font-weight: 600;
 }
 
 .active-filters {
@@ -140,88 +71,105 @@
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    background-color: #e9ecef;
-    border-radius: 4px;
+    background-color: #ecf0f1;
+    border-radius: 8px;
     font-size: 14px;
-    color: #333;
+    color: #2c3e50;
 }
 
 .filter-item button {
     margin-left: 10px;
     background: none;
     border: none;
-    color: #ff4d4d;
+    color: #e74c3c;
     cursor: pointer;
     font-size: 16px;
 }
 
 .filter-item button:hover {
-    color: #cc0000;
+    color: #c0392b;
 }
 
 .add-filter {
     display: flex;
     gap: 10px;
     align-items: center;
-    flex-wrap: wrap; /* Перенос элементов на новую строку, если не хватает места */
+    flex-wrap: wrap;
 }
 
 .add-filter select,
 .add-filter input {
-    padding: 8px;
+    padding: 10px;
     font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
     outline: none;
-    flex: 1 1 auto; /* Гибкие размеры */
-    min-width: 150px; /* Минимальная ширина для элементов */
+    flex: 1;
+    min-width: 150px;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s ease;
+}
+
+.add-filter select:focus,
+.add-filter input:focus {
+    border-color: #3498db;
 }
 
 .add-filter button {
-    padding: 8px 16px;
-    font-size: 14px;
+    background-color: #3498db;
     color: #fff;
-    background-color: #28a745;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    flex: 0 0 auto; /* Фиксированный размер для кнопки */
 }
 
 .add-filter button:hover {
-    background-color: #218838;
+    background-color: #2980b9;
 }
 
-/* Стили для состояния загрузки */
-.loading {
-    font-size: 18px;
-    color: #333;
-    text-align: center;
+/* Стили для таблицы */
+.dynamic-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    display: block;
+}
+
+.dynamic-table th,
+.dynamic-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ecf0f1;
+    white-space: nowrap;
+}
+
+.dynamic-table th {
+    background-color: #3498db;
+    color: #fff;
+    font-weight: 600;
+}
+
+.dynamic-table tr:hover {
+    background-color: #f5f6f7;
+}
+
+/* Стили для пагинации */
+.pagination {
+    display: flex;
+    justify-content: space-between;
     margin-top: 20px;
 }
 
-/* Стили для вспомогательных кнопок */
-.helper-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.helper-btn {
-    padding: 6px 12px;
-    font-size: 12px;
+.pagination-btn {
+    background-color: #3498db;
     color: #fff;
-    background-color: #6c757d;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
-.helper-btn:hover {
-    background-color: #5a6268;
+.pagination-btn:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: #2980b9;
 }
 
 /* Стили для группировки */
@@ -233,26 +181,26 @@
 }
 
 .group-by input {
-    padding: 8px;
+    padding: 10px;
     font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
     flex: 1;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s ease;
+}
+
+.group-by input:focus {
+    border-color: #3498db;
 }
 
 .group-by button {
-    padding: 8px 16px;
-    font-size: 14px;
+    background-color: #2ecc71;
     color: #fff;
-    background-color: #28a745;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .group-by button:hover {
-    background-color: #218838;
+    background-color: #27ae60;
 }
 
 /* Стили для агрегаций */
@@ -268,26 +216,26 @@
 }
 
 .add-aggregate select {
-    padding: 8px;
+    padding: 10px;
     font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
     flex: 1;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s ease;
+}
+
+.add-aggregate select:focus {
+    border-color: #3498db;
 }
 
 .add-aggregate button {
-    padding: 8px 16px;
-    font-size: 14px;
+    background-color: #3498db;
     color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .add-aggregate button:hover {
-    background-color: #0056b3;
+    background-color: #2980b9;
 }
 
 .aggregates-list {
@@ -301,40 +249,23 @@
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    background-color: #e9ecef;
-    border-radius: 4px;
+    background-color: #ecf0f1;
+    border-radius: 8px;
     font-size: 14px;
-    color: #333;
+    color: #2c3e50;
 }
 
 .aggregate-item button {
     margin-left: 10px;
     background: none;
     border: none;
-    color: #ff4d4d;
+    color: #e74c3c;
     cursor: pointer;
     font-size: 16px;
 }
 
 .aggregate-item button:hover {
-    color: #cc0000;
-}
-
-/* Стили для кнопки сброса */
-.reset-btn {
-    padding: 8px 16px;
-    font-size: 14px;
-    color: #fff;
-    background-color: #dc3545; /* Красный цвет для кнопки сброса */
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-bottom: 20px; /* Отступ снизу */
-}
-
-.reset-btn:hover {
-    background-color: #c82333; /* Темнее красный при наведении */
+    color: #c0392b;
 }
 
 /* Стили для HAVING-фильтров */
@@ -353,23 +284,23 @@
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    background-color: #e9ecef;
-    border-radius: 4px;
+    background-color: #ecf0f1;
+    border-radius: 8px;
     font-size: 14px;
-    color: #333;
+    color: #2c3e50;
 }
 
 .having-filter-item button {
     margin-left: 10px;
     background: none;
     border: none;
-    color: #ff4d4d;
+    color: #e74c3c;
     cursor: pointer;
     font-size: 16px;
 }
 
 .having-filter-item button:hover {
-    color: #cc0000;
+    color: #c0392b;
 }
 
 .add-having-filter {
@@ -380,27 +311,28 @@
 
 .add-having-filter select,
 .add-having-filter input {
-    padding: 8px;
+    padding: 10px;
     font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
     outline: none;
     flex: 1;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s ease;
+}
+
+.add-having-filter select:focus,
+.add-having-filter input:focus {
+    border-color: #3498db;
 }
 
 .add-having-filter button {
-    padding: 8px 16px;
-    font-size: 14px;
+    background-color: #3498db;
     color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .add-having-filter button:hover {
-    background-color: #0056b3;
+    background-color: #2980b9;
 }
 
 /* Стили для сортировки */
@@ -419,23 +351,23 @@
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    background-color: #e9ecef;
-    border-radius: 4px;
+    background-color: #ecf0f1;
+    border-radius: 8px;
     font-size: 14px;
-    color: #333;
+    color: #2c3e50;
 }
 
 .sort-condition-item button {
     margin-left: 10px;
     background: none;
     border: none;
-    color: #ff4d4d;
+    color: #e74c3c;
     cursor: pointer;
     font-size: 16px;
 }
 
 .sort-condition-item button:hover {
-    color: #cc0000;
+    color: #c0392b;
 }
 
 .add-sort-condition {
@@ -447,25 +379,34 @@
 
 .add-sort-condition select,
 .add-sort-condition input {
-    padding: 8px;
+    padding: 10px;
     font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
     outline: none;
     flex: 1;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s ease;
+}
+
+.add-sort-condition select:focus,
+.add-sort-condition input:focus {
+    border-color: #3498db;
 }
 
 .add-sort-condition button {
-    padding: 8px 16px;
-    font-size: 14px;
+    background-color: #3498db;
     color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .add-sort-condition button:hover {
-    background-color: #0056b3;
+    background-color: #2980b9;
+}
+
+/* Стили для состояния загрузки */
+.loading {
+    font-size: 18px;
+    color: #34495e;
+    text-align: center;
+    margin-top: 20px;
 }

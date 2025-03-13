@@ -1,4 +1,3 @@
-// VacanciesTable.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DynamicTable from "./DynamicTable";
@@ -7,6 +6,7 @@ import GroupBy from "./GroupBy";
 import Aggregates from "./Aggregates";
 import HavingFilters from "./HavingFilters";
 import SortBy from "./SortBy";
+import NotNullFilter from "./NotNullFilter"; // Импортируем новый компонент
 import "../styles/VacanciesTable.css";
 
 const VacanciesTable = () => {
@@ -20,8 +20,17 @@ const VacanciesTable = () => {
     const [havingFilters, setHavingFilters] = useState([]);
     const [sortBy, setSortBy] = useState("");
     const [resetTrigger, setResetTrigger] = useState(false); // Триггер для сброса состояния
+    const [notNull, setNotNull] = useState(""); // Состояние для фильтра not_null
 
-    const fetchVacancies = async (currentOffset, currentFilters, currentGroupBy, currentAggregates, currentHavingFilters, currentSortBy) => {
+    const fetchVacancies = async (
+        currentOffset,
+        currentFilters,
+        currentGroupBy,
+        currentAggregates,
+        currentHavingFilters,
+        currentSortBy,
+        currentNotNull // Новый параметр для not_null
+    ) => {
         try {
             const filtersString = currentFilters
                 .map((filter) => `${filter.field}${filter.operator}${filter.logic}:${filter.value}`)
@@ -51,6 +60,10 @@ const VacanciesTable = () => {
                 params.sort_by = currentSortBy;
             }
 
+            if (currentNotNull) {
+                params.not_null = currentNotNull; // Добавляем параметр not_null
+            }
+
             const response = await axios.get('http://127.0.0.1:8000/vacancies/table/', {
                 params,
             });
@@ -65,8 +78,8 @@ const VacanciesTable = () => {
     };
 
     useEffect(() => {
-        fetchVacancies(offset, filters, groupBy, aggregates, havingFilters, sortBy);
-    }, [offset, filters, groupBy, aggregates, havingFilters, sortBy]);
+        fetchVacancies(offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull);
+    }, [offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull]);
 
     const handleAddFilter = (newFilter) => {
         setFilters([...filters, newFilter]);
@@ -108,17 +121,22 @@ const VacanciesTable = () => {
         setSortBy(sortByValue);
     };
 
+    // Обработчик для применения фильтра not_null
+    const handleApplyNotNullFilter = (notNullValue) => {
+        setNotNull(notNullValue); // Обновляем состояние not_null
+    };
+
     const handleReset = () => {
         setFilters([]); // Очищаем фильтры
         setGroupBy(""); // Очищаем группировку
         setAggregates(""); // Очищаем агрегации
         setHavingFilters([]); // Очищаем HAVING-фильтры
         setSortBy(""); // Очищаем сортировку
+        setNotNull(""); // Очищаем фильтр not_null
         setOffset(0); // Сбрасываем пагинацию
         setResetTrigger((prev) => !prev); // Изменяем триггер для сброса
-        fetchVacancies(0, [], "", "", [], ""); // Делаем запрос без параметров
+        fetchVacancies(0, [], "", "", [], "", ""); // Делаем запрос без параметров
     };
-
 
     // Сброс сортировки после каждого запроса
     useEffect(() => {
@@ -155,7 +173,7 @@ const VacanciesTable = () => {
             />
 
             <Aggregates
-                aggregates={aggregates} // Передаем текущее значение агрегаций
+                aggregates={aggregates}
                 onApplyAggregates={handleApplyAggregates}
             />
 
@@ -168,11 +186,17 @@ const VacanciesTable = () => {
                 />
             )}
 
-            {/* Сортировка */}
+            {/* Новый компонент для фильтра not_null */}
+            <NotNullFilter
+                notNull={notNull} // Передаем текущее значение not_null
+                onApplyNotNullFilter={handleApplyNotNullFilter}
+                resetTrigger={resetTrigger} // Передаем триггер для сброса
+            />
+
             <SortBy
                 columns={columns}
                 onApplySortBy={handleApplySortBy}
-                sortBy={sortBy} // Передаем текущее значение сортировки
+                sortBy={sortBy}
             />
 
             <DynamicTable data={vacancies} />
