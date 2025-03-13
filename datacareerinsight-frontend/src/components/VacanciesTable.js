@@ -6,7 +6,8 @@ import GroupBy from "./GroupBy";
 import Aggregates from "./Aggregates";
 import HavingFilters from "./HavingFilters";
 import SortBy from "./SortBy";
-import NotNullFilter from "./NotNullFilter"; // Импортируем новый компонент
+import NotNullFilter from "./NotNullFilter";
+import LimitFilter from "./LimitFilter";
 import "../styles/VacanciesTable.css";
 
 const VacanciesTable = () => {
@@ -19,8 +20,9 @@ const VacanciesTable = () => {
     const [aggregates, setAggregates] = useState("");
     const [havingFilters, setHavingFilters] = useState([]);
     const [sortBy, setSortBy] = useState("");
-    const [resetTrigger, setResetTrigger] = useState(false); // Триггер для сброса состояния
-    const [notNull, setNotNull] = useState(""); // Состояние для фильтра not_null
+    const [resetTrigger, setResetTrigger] = useState(false);
+    const [notNull, setNotNull] = useState("");
+    const [limit, setLimit] = useState(8); // Значение по умолчанию = 8
 
     const fetchVacancies = async (
         currentOffset,
@@ -29,7 +31,8 @@ const VacanciesTable = () => {
         currentAggregates,
         currentHavingFilters,
         currentSortBy,
-        currentNotNull // Новый параметр для not_null
+        currentNotNull,
+        currentLimit
     ) => {
         try {
             const filtersString = currentFilters
@@ -37,7 +40,8 @@ const VacanciesTable = () => {
                 .join(";");
 
             const params = {
-                offset: currentOffset,
+                offset: Number(currentOffset), // Преобразуем в число
+                limit: Number(currentLimit),   // Преобразуем в число
             };
 
             if (filtersString) {
@@ -61,7 +65,7 @@ const VacanciesTable = () => {
             }
 
             if (currentNotNull) {
-                params.not_null = currentNotNull; // Добавляем параметр not_null
+                params.not_null = currentNotNull;
             }
 
             const response = await axios.get('http://127.0.0.1:8000/vacancies/table/', {
@@ -78,8 +82,19 @@ const VacanciesTable = () => {
     };
 
     useEffect(() => {
-        fetchVacancies(offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull);
-    }, [offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull]);
+        console.log("Fetching vacancies with:", {
+            offset,
+            limit,
+            totalCount,
+            filters,
+            groupBy,
+            aggregates,
+            havingFilters,
+            sortBy,
+            notNull,
+        });
+        fetchVacancies(offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit);
+    }, [offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit, totalCount]); // Добавили totalCount в зависимости
 
     const handleAddFilter = (newFilter) => {
         setFilters([...filters, newFilter]);
@@ -90,10 +105,23 @@ const VacanciesTable = () => {
     };
 
     const handlePageChange = (direction) => {
-        if (direction === 'next' && offset + 15 < totalCount) {
-            setOffset(offset + 15);
-        } else if (direction === 'prev' && offset - 15 >= 0) {
-            setOffset(offset - 15);
+        const currentOffset = Number(offset);
+        const currentLimit = Number(limit);
+        const currentTotalCount = Number(totalCount);
+
+        console.log("handlePageChange:", {
+            direction,
+            currentOffset,
+            currentLimit,
+            currentTotalCount,
+            nextOffset: currentOffset + currentLimit,
+            condition: currentOffset + currentLimit < currentTotalCount,
+        });
+
+        if (direction === 'next' && currentOffset + currentLimit < currentTotalCount) {
+            setOffset(currentOffset + currentLimit);
+        } else if (direction === 'prev' && currentOffset - currentLimit >= 0) {
+            setOffset(currentOffset - currentLimit);
         }
     };
 
@@ -121,27 +149,38 @@ const VacanciesTable = () => {
         setSortBy(sortByValue);
     };
 
-    // Обработчик для применения фильтра not_null
     const handleApplyNotNullFilter = (notNullValue) => {
-        setNotNull(notNullValue); // Обновляем состояние not_null
+        setNotNull(notNullValue);
+    };
+
+    // Обработчик для применения лимита
+    const handleApplyLimit = (newLimit) => {
+        setLimit(newLimit); // Обновляем состояние limit
+        setOffset(0); // Сбрасываем offset при изменении limit
     };
 
     const handleReset = () => {
-        setFilters([]); // Очищаем фильтры
-        setGroupBy(""); // Очищаем группировку
-        setAggregates(""); // Очищаем агрегации
-        setHavingFilters([]); // Очищаем HAVING-фильтры
-        setSortBy(""); // Очищаем сортировку
-        setNotNull(""); // Очищаем фильтр not_null
-        setOffset(0); // Сбрасываем пагинацию
+        setFilters([]);
+        setGroupBy("");
+        setAggregates("");
+        setHavingFilters([]);
+        setSortBy("");
+        setNotNull("");
+        setLimit(8); // Сбрасываем limit на значение по умолчанию
+        setOffset(0);
         setResetTrigger((prev) => !prev); // Изменяем триггер для сброса
-        fetchVacancies(0, [], "", "", [], "", ""); // Делаем запрос без параметров
+        fetchVacancies(0, [], "", "", [], "", "", 8); // Делаем запрос с limit по умолчанию
     };
 
     // Сброс сортировки после каждого запроса
     useEffect(() => {
-        setSortBy(""); // Очищаем сортировку после каждого запроса
-    }, [filters, groupBy, aggregates, havingFilters]);
+        setSortBy(""); // Очищаем сортировку
+    }, [filters, groupBy, aggregates, havingFilters, notNull]);
+
+    // Сброс offset после каждого запроса
+    useEffect(() => {
+        setOffset(0);  // Сбрасываем offset
+    }, [filters, groupBy, aggregates, havingFilters, sortBy, notNull]); // Добавили sortBy в зависимости
 
     if (loading) {
         return <div className="loading">Loading...</div>;
@@ -169,7 +208,7 @@ const VacanciesTable = () => {
                 groupBy={groupBy}
                 onApplyGroupBy={handleApplyGroupBy}
                 onClearGroupBy={handleClearGroupBy}
-                resetTrigger={resetTrigger} // Передаем триггер для сброса
+                resetTrigger={resetTrigger}
             />
 
             <Aggregates
@@ -186,11 +225,10 @@ const VacanciesTable = () => {
                 />
             )}
 
-            {/* Новый компонент для фильтра not_null */}
             <NotNullFilter
-                notNull={notNull} // Передаем текущее значение not_null
+                notNull={notNull}
                 onApplyNotNullFilter={handleApplyNotNullFilter}
-                resetTrigger={resetTrigger} // Передаем триггер для сброса
+                resetTrigger={resetTrigger}
             />
 
             <SortBy
@@ -200,6 +238,13 @@ const VacanciesTable = () => {
             />
 
             <DynamicTable data={vacancies} />
+
+            {/* Новый компонент для лимита */}
+            <LimitFilter
+                limit={limit}
+                onApplyLimit={handleApplyLimit}
+                resetTrigger={resetTrigger} // Передаем триггер для сброса
+            />
 
             <div className="pagination">
                 <button
@@ -211,7 +256,7 @@ const VacanciesTable = () => {
                 </button>
                 <button
                     onClick={() => handlePageChange('next')}
-                    disabled={offset + 15 >= totalCount}
+                    disabled={Number(offset) + Number(limit) >= Number(totalCount)}
                     className="pagination-btn"
                 >
                     Следующая страница
