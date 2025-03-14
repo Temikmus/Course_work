@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { fields, numericFields, numericAggregations, nonNumericAggregations } from "./constants";
+import {
+    fields,
+    numericFields,
+    numericAggregations,
+    nonNumericAggregations,
+    dateFields,
+    dateAggregations,
+} from "./constants";
 
 const Aggregates = ({ aggregates, onApplyAggregates }) => {
     const [selectedColumn, setSelectedColumn] = useState(""); // Выбранный столбец
@@ -38,6 +45,8 @@ const Aggregates = ({ aggregates, onApplyAggregates }) => {
     const getAvailableAggregations = () => {
         if (numericFields.includes(selectedColumn)) {
             return numericAggregations; // Числовые агрегации для числовых полей
+        } else if (dateFields.includes(selectedColumn)) {
+            return dateAggregations; // Агрегации для полей с датами
         } else {
             return nonNumericAggregations; // Нечисловые агрегации для остальных полей
         }

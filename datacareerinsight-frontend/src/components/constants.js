@@ -33,6 +33,14 @@ export const nonNumericAggregations = [
     { value: "count", label: "Количество" }
 ];
 
+// Агрегации для полей с датами
+export const dateAggregations = [
+    { value: "max", label: "Максимум" },
+    { value: "min", label: "Минимум" },
+    { value: "mode", label: "Мода" },
+    { value: "count", label: "Количество" }
+];
+
 export const numericFields = [
     "min_experience", "max_experience", "salary_to", "salary_from",
     "russian_salary_to", "russian_salary_from", "bonus", "id"

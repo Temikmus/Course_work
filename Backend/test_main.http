@@ -179,4 +179,23 @@ Accept: application/json
 GET http://127.0.0.1:8000/vacancies/table/?offset=0&limit=8&group_by=currency&aggregates=type_of_employment:mode,currency:count
 Accept: application/json
 
+###
 
+GET http://127.0.0.1:8000/vacancies/table/?aggregates=published_at:max
+Accept: application/json
+
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?filters=published_at=or:mode~published_at
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?filters=currency=or:mode~currency
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?filters=skills=or:mode~skills
+Accept: application/json

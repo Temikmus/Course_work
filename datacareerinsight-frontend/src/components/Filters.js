@@ -6,6 +6,7 @@ import {
     operators,
     numericAggregations,
     nonNumericAggregations,
+    dateAggregations,
     dateFields,
     getFilteredOperators,
     numericFields,
@@ -18,12 +19,14 @@ const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
     const [logic, setLogic] = useState("or");
     const [value, setValue] = useState("");
     const [dateValue, setDateValue] = useState(null); // Состояние для выбранной даты
+    const [isHelperSelected, setIsHelperSelected] = useState(false); // Состояние для отслеживания выбора предложенного значения
 
     // Обработчик выбора вспомогательного значения
     const handleHelperClick = (aggValue) => {
         if (field) {
             const formattedValue = `${aggValue}~${field}`;
             setValue(formattedValue);
+            setIsHelperSelected(true); // Указываем, что выбрано предложенное значение
         }
     };
 
@@ -46,6 +49,7 @@ const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
             setField("");
             setValue("");
             setDateValue(null); // Сбрасываем выбранную дату
+            setIsHelperSelected(false); // Сбрасываем состояние выбора предложенного значения
         }
     };
 
@@ -59,8 +63,11 @@ const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
             return numericAggregations.filter(agg =>
                 ["avg", "max", "min", "median", "mode"].includes(agg.value)
             );
+        } else if (dateFields.includes(field)) {
+            // Для полей с датой показываем агрегации для дат
+            return dateAggregations.filter(agg => agg.value !== "count");
         } else {
-            // Для нечисловых полей убираем "Количество" (count)
+            // Для остальных полей убираем "Количество" (count)
             return nonNumericAggregations.filter(agg => agg.value !== "count");
         }
     };
@@ -82,7 +89,10 @@ const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
             {/* Добавление нового фильтра */}
             <div className="add-filter">
                 {/* Поле для выбора столбца */}
-                <select value={field} onChange={(e) => setField(e.target.value)}>
+                <select value={field} onChange={(e) => {
+                    setField(e.target.value);
+                    setIsHelperSelected(false); // Сбрасываем состояние при изменении поля
+                }}>
                     <option value="">Выберите поле</option>
                     {fields.map((fieldName) => (
                         <option key={fieldName} value={fieldName}>
@@ -109,7 +119,7 @@ const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
                 )}
 
                 {/* Ввод значения */}
-                {dateFields.includes(field) ? (
+                {dateFields.includes(field) && !isHelperSelected ? (
                     // Календарь для выбора даты
                     <DatePicker
                         selected={dateValue}

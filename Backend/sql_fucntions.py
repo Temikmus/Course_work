@@ -196,6 +196,132 @@ def parse_filters(filters):
         raise
 
 
+
+
+# Функция для выполнения агрегации и получения одного значения
+
+
+def find_aggregate_value(query: Query, column_name: str, aggregate_func: str, base_model):
+    """
+    Применяет агрегирующую функцию к указанному столбцу.
+
+    :param query: Исходный объект SQLAlchemy Query.
+    :param column_name: Имя столбца (например, "skills").
+    :param aggregate_func: Агрегирующая функция (например, "mode").
+    :param base_model: SQLAlchemy модель.
+    :return: Результат агрегации или None.
+    """
+    # Получаем атрибут столбца из модели
+    column_attr = getattr(base_model, column_name, None)
+    if column_attr is None:
+        raise ValueError(f"Столбец '{column_name}' не существует в модели {base_model.__name__}.")
+
+    print("\n\n\n1:", "\n\n\n\n")
+
+    # Проверяем, поддерживается ли агрегатная функция
+    if aggregate_func not in aggregate_funcs and aggregate_func != "mode":
+        raise ValueError(f"Агрегирующая функция '{aggregate_func}' не поддерживается.")
+
+    # Проверяем, является ли столбец массивом
+    if isinstance(column_attr.type, ARRAY):
+        print("\n\n\n2:", "\n\n\n\n")
+
+        # Подзапрос для развертывания массива с исключением пустых значений
+        subquery = (
+            query.session.query(func.unnest(column_attr).label("value"))
+            .filter(func.array_length(column_attr, 1) > 0)  # Игнорируем пустые массивы
+            .subquery()
+        )
+
+        # Если агрегатная функция — mode
+        if aggregate_func == "mode":
+            agg_func = func.mode().within_group(subquery.c.value)
+        else:
+            agg_func = aggregate_funcs[aggregate_func](subquery.c.value)
+
+    else:
+        # Для обычных столбцов применяем стандартную агрегацию
+        agg_func = aggregate_funcs[aggregate_func](column_attr)
+
+    print("\n\n\nAGG FUNC:", agg_func, "\n\n\n")
+
+    try:
+        # Выполняем запрос
+        result = query.session.query(agg_func).scalar()
+        print("\n\n\nRESULT:", result, "\n\n\n")
+        return result
+    except Exception as e:
+        print(f"\n\n\nERROR: {e}\n\n\n")
+        return None
+
+def apply_compare_filter_for_column_with_one_value(query: Query, column: str, values, operator: str, separator: str,
+                                                   base_model):
+    column_attr = getattr(base_model, column, None)
+    if not column_attr:
+        raise ValueError(f"Столбец '{column}' не существует в модели Vacancy")
+    try:
+        # Проверка типа столбца
+        if len(values) == 2:
+            if values[0] in aggregate_funcs:
+                values = [find_aggregate_value(query, values[1], values[0], base_model)]
+                print(values)
+
+        item_type = column_attr.type
+        if isinstance(item_type, String):
+            # Для строк добавляем оператор для нечувствительного сравнения подстроки
+            operators = {
+                ">": lambda value: column_attr > value,
+                ">=": lambda value: column_attr >= value,
+                "<": lambda value: column_attr < value,
+                "<=": lambda value: column_attr <= value,
+                "=": lambda value: column_attr == value,
+                "!=": lambda value: column_attr != value,
+                "==": lambda value: column_attr.ilike(f"%{value}%"),  # Нечувствительное сравнение подстроки
+            }
+        elif isinstance(item_type, DateTime):
+            # Для столбцов типа DateTime преобразуем строку в datetime и сравниваем только дату
+            operators = {
+                ">": lambda value: cast(column_attr, Date) > value.date() if isinstance(value, datetime) else cast(
+                    column_attr, Date) > datetime.strptime(value, "%Y-%m-%d").date(),
+                ">=": lambda value: cast(column_attr, Date) >= value.date() if isinstance(value, datetime) else cast(
+                    column_attr, Date) >= datetime.strptime(value, "%Y-%m-%d").date(),
+                "<": lambda value: cast(column_attr, Date) < value.date() if isinstance(value, datetime) else cast(
+                    column_attr, Date) < datetime.strptime(value, "%Y-%m-%d").date(),
+                "<=": lambda value: cast(column_attr, Date) <= value.date() if isinstance(value, datetime) else cast(
+                    column_attr, Date) <= datetime.strptime(value, "%Y-%m-%d").date(),
+                "=": lambda value: cast(column_attr, Date) == value.date() if isinstance(value, datetime) else cast(
+                    column_attr, Date) == datetime.strptime(value, "%Y-%m-%d").date(),
+                "!=": lambda value: cast(column_attr, Date) != value.date() if isinstance(value, datetime) else cast(
+                    column_attr, Date) != datetime.strptime(value, "%Y-%m-%d").date(),
+            }
+        else:
+            # Для других типов столбцов
+            operators = {
+                ">": lambda value: column_attr > value,
+                ">=": lambda value: column_attr >= value,
+                "<": lambda value: column_attr < value,
+                "<=": lambda value: column_attr <= value,
+                "=": lambda value: column_attr == value,
+                "!=": lambda value: column_attr != value,
+            }
+
+        if operator not in operators:
+            raise ValueError(f"Оператор '{operator}' не поддерживается")
+
+        # Преобразуем значения в соответствующие фильтры
+        conditions = [operators[operator](value) for value in values]
+        # Логическое объединение (OR или AND)
+        if separator == "or":
+            condition = or_(*conditions)  # OR
+        else:
+            condition = and_(*conditions)  # AND
+
+        return query.filter(condition)
+    except Exception as e:
+        logging.error(f"One value: '{e}")
+        raise
+
+
 # Применяем фильтр для столбца типа array, так как там идет проверка для каждого элемента массива:
 # если для какого-то элемента выполняется условие, то эта строка добавляется к выводу
 # (например, skills=sql выведет все строки, где есть в skills sql)
@@ -204,6 +330,12 @@ def apply_compare_filter_for_array_column(query: Query, column: str, values, ope
     if not column_attr:
         raise ValueError(f"Столбец '{column}' не существует в модели Vacancy")
     try:
+        # Проверка типа столбца
+        if len(values) == 2:
+            if values[0] in aggregate_funcs:
+                values = [find_aggregate_value(query, values[1], values[0], base_model)]
+                print(values)
+
         # Проверяем тип элемента массива
         item_type = column_attr.type.item_type
         print(f"Type of column: {type(item_type)}")  # Печатаем тип элемента массива
@@ -240,92 +372,6 @@ def apply_compare_filter_for_array_column(query: Query, column: str, values, ope
     except Exception as e:
         logging.error(f"Error array_column: '{e}")
         raise
-
-# Функция для выполнения агрегации и получения одного значения
-def find_aggregate_value(query, column_name, aggregate_func, base_model):
-    """
-    Применяет агрегирующую функцию к указанному столбцу.
-
-    :param query: Исходный объект query.
-    :param column_name: Имя столбца (например, "salary").
-    :param aggregate_func: Агрегирующая функция (например, "max", "min", "avg").
-    :return: Результат агрегации.
-    """
-    # Получаем атрибут столбца из модели
-    column_attr = getattr(base_model, column_name, None)
-    if column_attr is None:
-        raise ValueError(f"Столбец '{column_name}' не существует в модели Vacancy.")
-
-    # Получаем агрегирующую функцию
-    if aggregate_func not in aggregate_funcs:
-        raise ValueError(f"Агрегирующая функция '{aggregate_func}' не поддерживается.")
-
-    # Применяем агрегирующую функцию к столбцу
-    agg_func = aggregate_funcs[aggregate_func](column_attr)
-
-    # Выполняем запрос
-    result = query.with_entities(agg_func).scalar()
-    return result
-
-#Применяем фильтр для столбца с одним значением
-def apply_compare_filter_for_column_with_one_value(query: Query, column: str, values, operator: str, separator: str, base_model):
-    column_attr = getattr(base_model, column, None)
-    if not column_attr:
-        raise ValueError(f"Столбец '{column}' не существует в модели Vacancy")
-    try:
-        # Проверка типа столбца
-        if len(values)==2:
-            if values[0] in aggregate_funcs:
-                values = [find_aggregate_value(query, values[1], values[0], base_model)]
-        item_type = column_attr.type
-        if isinstance(item_type, String):
-            # Для строк добавляем оператор для нечувствительного сравнения подстроки
-            operators = {
-                ">": lambda value: column_attr > value,
-                ">=": lambda value: column_attr >= value,
-                "<": lambda value: column_attr < value,
-                "<=": lambda value: column_attr <= value,
-                "=": lambda value: column_attr == value,
-                "!=": lambda value: column_attr != value,
-                "==": lambda value: column_attr.ilike(f"%{value}%"),  # Нечувствительное сравнение подстроки
-            }
-        elif isinstance(item_type, DateTime):
-            # Для столбцов типа DateTime преобразуем строку в datetime и сравниваем только дату
-            operators = {
-                ">": lambda value: cast(column_attr, Date) > datetime.strptime(value, "%Y-%m-%d").date(),
-                ">=": lambda value: cast(column_attr, Date) >= datetime.strptime(value, "%Y-%m-%d").date(),
-                "<": lambda value: cast(column_attr, Date) < datetime.strptime(value, "%Y-%m-%d").date(),
-                "<=": lambda value: cast(column_attr, Date) <= datetime.strptime(value, "%Y-%m-%d").date(),
-                "=": lambda value: cast(column_attr, Date) == datetime.strptime(value, "%Y-%m-%d").date(),
-                "!=": lambda value: cast(column_attr, Date) != datetime.strptime(value, "%Y-%m-%d").date(),
-            }
-        else:
-            # Для других типов столбцов
-            operators = {
-                ">": lambda value: column_attr > value,
-                ">=": lambda value: column_attr >= value,
-                "<": lambda value: column_attr < value,
-                "<=": lambda value: column_attr <= value,
-                "=": lambda value: column_attr == value,
-                "!=": lambda value: column_attr != value,
-            }
-
-        if operator not in operators:
-            raise ValueError(f"Оператор '{operator}' не поддерживается")
-
-        # Преобразуем значения в соответствующие фильтры
-        conditions = [operators[operator](value) for value in values]
-        # Логическое объединение (OR или AND)
-        if separator == "or":
-            condition = or_(*conditions)  # OR
-        else:
-            condition = and_(*conditions)  # AND
-
-        return query.filter(condition)
-    except Exception as e:
-        logging.error(f"One value: '{e}")
-        raise
-
 
 def apply_filter_for_column(query: Query, column: str, values, operator: str, separator: str, base_model):
     column_model = getattr(base_model, column)
