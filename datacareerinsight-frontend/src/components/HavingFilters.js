@@ -1,10 +1,16 @@
 import React, { useState } from "react";
-import { operators } from "./constants"; // Импортируем операторы
 
-const HavingFilters = ({ aggregates, onAddHavingFilter, onRemoveHavingFilter, havingFilters }) => {
+
+const HavingFilters = ({ aggregates, onAddHavingFilter, onRemoveHavingFilter, havingFilters, fieldsConfig = {
+    operators: []
+} }) => {
     const [column, setColumn] = useState(""); // Выбранный столбец
     const [operator, setOperator] = useState(">"); // Оператор сравнения
     const [value, setValue] = useState(""); // Значение для сравнения
+
+    const {
+        operators
+    } = fieldsConfig;
 
     // Обработчик добавления фильтра
     const handleAddHavingFilter = () => {

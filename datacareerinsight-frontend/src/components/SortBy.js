@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { fields } from "./constants"; // Импортируем список полей
 
-const SortBy = ({ columns, onApplySortBy, sortBy }) => {
+
+const SortBy = ({ columns, onApplySortBy, sortBy, fieldsConfig = {
+    fields: []
+} }) => {
     const [selectedColumn, setSelectedColumn] = useState(""); // Выбранный столбец
     const [sortOrder, setSortOrder] = useState("asc"); // Направление сортировки
     const [sortConditions, setSortConditions] = useState([]); // Список условий сортировки
 
+    const {
+        fields
+    } = fieldsConfig;
     // Синхронизация внутреннего состояния с пропсом sortBy
     useEffect(() => {
         if (sortBy) {

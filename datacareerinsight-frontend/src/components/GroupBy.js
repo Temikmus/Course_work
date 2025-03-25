@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-// import { fields } from "./constants"; // Импортируем список полей
+
 
 const GroupBy = ({ groupBy, onApplyGroupBy, onClearGroupBy, resetTrigger, fieldsConfig = {
     fields: []

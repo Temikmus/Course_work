@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { fields } from "./constants"; // Импортируем список полей
 
-const NotNullFilter = ({ notNull, onApplyNotNullFilter, resetTrigger }) => {
+
+const NotNullFilter = ({ notNull, onApplyNotNullFilter, resetTrigger, fieldsConfig = {
+    fields: []
+} }) => {
     const [showColumnMenu, setShowColumnMenu] = useState(false); // Состояние для отображения меню
     const [selectedColumns, setSelectedColumns] = useState([]); // Выбранные столбцы
+
+    const {
+        fields
+    } = fieldsConfig;
 
     // Синхронизация внутреннего состояния с пропсом notNull
     useEffect(() => {

@@ -265,6 +265,7 @@ const VacanciesTable = () => {
                     onAddHavingFilter={handleAddHavingFilter}
                     onRemoveHavingFilter={handleRemoveHavingFilter}
                     havingFilters={havingFilters}
+                    fieldsConfig={vacanciesFieldsConfig}
                 />
             )}
 
@@ -272,12 +273,14 @@ const VacanciesTable = () => {
                 notNull={notNull}
                 onApplyNotNullFilter={handleApplyNotNullFilter}
                 resetTrigger={resetTrigger}
+                fieldsConfig={vacanciesFieldsConfig}
             />
 
             <SortBy
                 columns={columns}
                 onApplySortBy={handleApplySortBy}
                 sortBy={sortBy}
+                fieldsConfig={vacanciesFieldsConfig}
             />
 
             <DynamicTable
