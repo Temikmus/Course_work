@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import DynamicTable from "./DynamicTable";
-import Filters from "./Filters";
-import GroupBy from "./GroupBy";
-import Aggregates from "./Aggregates";
-import HavingFilters from "./HavingFilters";
-import SortBy from "./SortBy";
-import NotNullFilter from "./NotNullFilter";
-import LimitFilter from "./LimitFilter";
-import { vacanciesFieldsConfig } from "./vacancies.config";
+import DynamicTable from "./for_tables/DynamicTable";
+import Filters from "./for_tables/Filters";
+import GroupBy from "./for_tables/GroupBy";
+import Aggregates from "./for_tables/Aggregates";
+import HavingFilters from "./for_tables/HavingFilters";
+import SortBy from "./for_tables/SortBy";
+import NotNullFilter from "./for_tables/NotNullFilter";
+import LimitFilter from "./for_tables/LimitFilter";
+import { vacanciesFieldsConfig } from "./configs/vacancies.config";
 import "../styles/VacanciesTable.css";
 
 

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import DatePicker from "react-datepicker"; // Импортируем календарь
 import "react-datepicker/dist/react-datepicker.css"; // Стили для календаря
-import { isNumericField } from "../utils/utils";
 
 const Filters = ({   filters,
                      onAddFilter,
