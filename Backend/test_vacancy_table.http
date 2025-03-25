@@ -100,12 +100,12 @@ Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/vacancies/table/?group_by=skills&aggregates=skills:count&sort_by=skills:count:asc
+GET http://127.0.0.1:8000/vacancies/table/?group_by=skills&aggregates=skills:count&sort_by=skills:count:desc
 Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/vacancies/table/?specific_fields=skills&filters=skills==Pandas
+GET http://127.0.0.1:8000/vacancies/table/?specific_fields=skills&filters=skills==Customer Lifetime Value
 Accept: application/json
 
 ###
@@ -197,5 +197,12 @@ Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/vacancies/table/?filters=skills=or:mode~skills
+GET http://127.0.0.1:8000/vacancies/table/?filters=skills=mode~skills
 Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/vacancies/table/?offset=0&limit=8&group_by=currency&aggregates=skills:mode
+Accept: application/json
+
+

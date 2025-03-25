@@ -1,25 +1,40 @@
 import React, { useState } from "react";
 import DatePicker from "react-datepicker"; // Импортируем календарь
 import "react-datepicker/dist/react-datepicker.css"; // Стили для календаря
-import {
-    fields,
-    operators,
-    numericAggregations,
-    nonNumericAggregations,
-    dateAggregations,
-    dateFields,
-    getFilteredOperators,
-    numericFields,
-} from "./constants";
 import { isNumericField } from "../utils/utils";
 
-const Filters = ({ filters, onAddFilter, onRemoveFilter }) => {
+const Filters = ({   filters,
+                     onAddFilter,
+                     onRemoveFilter,
+                     fieldsConfig = {
+                         fields: [],
+                         numericFields: [],
+                         dateFields: [],
+                         operators: [],
+                         numericAggregations: [],
+                         nonNumericAggregations: [],
+                         dateAggregations: [],
+                         getFilteredOperators: () => []
+                     }
+                 }) => {
     const [field, setField] = useState("");
     const [operator, setOperator] = useState("=");
     const [logic, setLogic] = useState("or");
     const [value, setValue] = useState("");
     const [dateValue, setDateValue] = useState(null); // Состояние для выбранной даты
     const [isHelperSelected, setIsHelperSelected] = useState(false); // Состояние для отслеживания выбора предложенного значения
+
+    // Деструктуризация с значениями по умолчанию
+    const {
+        fields = [],
+        operators = [],
+        numericFields = [],
+        dateFields = [],
+        numericAggregations = [],
+        nonNumericAggregations = [],
+        dateAggregations = [],
+        getFilteredOperators
+    } = fieldsConfig;
 
     // Обработчик выбора вспомогательного значения
     const handleHelperClick = (aggValue) => {

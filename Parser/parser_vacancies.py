@@ -209,7 +209,7 @@ def get_vacancies_with_dates(vacancy_name, date_list, access_token):
 
 
 start_date = datetime(2025, 1, 10)
-end_date = datetime(2025, 1, 24)
+end_date = datetime(2025, 3, 24)
 date_list = generate_date_list(start_date, end_date)
 
 #ключевые слова для фильтрации

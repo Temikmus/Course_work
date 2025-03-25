@@ -1,62 +1,64 @@
 import React, { useState, useEffect } from "react";
-import {
-    fields,
-    numericFields,
-    numericAggregations,
-    nonNumericAggregations,
-    dateFields,
-    dateAggregations,
-} from "./constants";
 
-const Aggregates = ({ aggregates, onApplyAggregates }) => {
-    const [selectedColumn, setSelectedColumn] = useState(""); // Выбранный столбец
-    const [selectedAggregation, setSelectedAggregation] = useState(""); // Выбранная агрегация
-    const [aggregatesList, setAggregatesList] = useState([]); // Список агрегаций
+const Aggregates = ({
+                        aggregates,
+                        onApplyAggregates,
+                        fieldsConfig = {
+                            fields: [],
+                            numericFields: [],
+                            numericAggregations: [],
+                            nonNumericAggregations: [],
+                            dateFields: [],
+                            dateAggregations: []
+                        }
+                    }) => {
+    const [selectedColumn, setSelectedColumn] = useState("");
+    const [selectedAggregation, setSelectedAggregation] = useState("");
+    const [aggregatesList, setAggregatesList] = useState([]);
 
-    // Синхронизация внутреннего состояния с пропсом aggregates
+    const {
+        fields,
+        numericFields,
+        numericAggregations,
+        nonNumericAggregations,
+        dateFields,
+        dateAggregations
+    } = fieldsConfig;
+
     useEffect(() => {
-        if (aggregates) {
-            setAggregatesList(aggregates.split(","));
-        } else {
-            setAggregatesList([]);
-        }
+        setAggregatesList(aggregates ? aggregates.split(",") : []);
     }, [aggregates]);
 
-    // Обработчик добавления агрегации
     const handleAddAggregate = () => {
         if (selectedColumn && selectedAggregation) {
             const newAggregate = `${selectedColumn}:${selectedAggregation}`;
             const updatedAggregatesList = [...aggregatesList, newAggregate];
-            setAggregatesList(updatedAggregatesList); // Добавляем в список
-            setSelectedColumn(""); // Сбрасываем выбор столбца
-            setSelectedAggregation(""); // Сбрасываем выбор агрегации
-            onApplyAggregates(updatedAggregatesList.join(",")); // Обновляем агрегации в родительском компоненте
+            setAggregatesList(updatedAggregatesList);
+            onApplyAggregates(updatedAggregatesList.join(","));
+            setSelectedColumn("");
+            setSelectedAggregation("");
         }
     };
 
-    // Обработчик удаления агрегации
     const handleRemoveAggregate = (index) => {
         const updatedAggregatesList = aggregatesList.filter((_, i) => i !== index);
-        setAggregatesList(updatedAggregatesList); // Удаляем из списка
-        onApplyAggregates(updatedAggregatesList.join(",")); // Обновляем агрегации в родительском компоненте
+        setAggregatesList(updatedAggregatesList);
+        onApplyAggregates(updatedAggregatesList.join(","));
     };
 
-    // Получаем список агрегаций для выбранного столбца
     const getAvailableAggregations = () => {
         if (numericFields.includes(selectedColumn)) {
-            return numericAggregations; // Числовые агрегации для числовых полей
+            return numericAggregations;
         } else if (dateFields.includes(selectedColumn)) {
-            return dateAggregations; // Агрегации для полей с датами
-        } else {
-            return nonNumericAggregations; // Нечисловые агрегации для остальных полей
+            return dateAggregations;
         }
+        return nonNumericAggregations;
     };
 
     return (
         <div className="aggregates">
             <h3>Агрегации</h3>
 
-            {/* Выбор столбца и агрегации */}
             <div className="add-aggregate">
                 <select
                     value={selectedColumn}
@@ -64,28 +66,29 @@ const Aggregates = ({ aggregates, onApplyAggregates }) => {
                 >
                     <option value="">Выберите столбец</option>
                     {fields.map((field) => (
-                        <option key={field} value={field}>
-                            {field}
-                        </option>
+                        <option key={field} value={field}>{field}</option>
                     ))}
                 </select>
 
                 <select
                     value={selectedAggregation}
                     onChange={(e) => setSelectedAggregation(e.target.value)}
+                    disabled={!selectedColumn}
                 >
                     <option value="">Выберите агрегацию</option>
                     {getAvailableAggregations().map((agg) => (
-                        <option key={agg.value} value={agg.value}>
-                            {agg.label}
-                        </option>
+                        <option key={agg.value} value={agg.value}>{agg.label}</option>
                     ))}
                 </select>
 
-                <button onClick={handleAddAggregate}>Добавить агрегацию</button>
+                <button
+                    onClick={handleAddAggregate}
+                    disabled={!selectedColumn || !selectedAggregation}
+                >
+                    Добавить агрегацию
+                </button>
             </div>
 
-            {/* Список добавленных агрегаций */}
             <div className="aggregates-list">
                 {aggregatesList.map((aggregate, index) => (
                     <div key={index} className="aggregate-item">

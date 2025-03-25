@@ -9,49 +9,9 @@ from sqlalchemy.types import String, DateTime, Date, ARRAY
 from sqlalchemy.sql.functions import percentile_cont
 from sqlalchemy.sql.expression import select
 import logging
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql import func, select, column, table, text
 
-def apply_time_interval_grouping(query, column_name, interval, base_model):
-    """
-    Группирует данные по временным интервалам (day, week, month, year).
-    """
-    column_attr = getattr(base_model, column_name, None)
-    if not column_attr:
-        raise HTTPException(status_code=400, detail=f"Поле '{column_name}' не найдено")
-
-    interval_mapping = {
-        "day": func.date_trunc("day", column_attr),
-        "week": func.date_trunc("week", column_attr),
-        "month": func.date_trunc("month", column_attr),
-        "year": func.date_trunc("year", column_attr)
-    }
-
-    if interval not in interval_mapping:
-        raise HTTPException(status_code=400, detail=f"Неверный интервал '{interval}'. Доступны: day, week, month, year")
-
-    grouped_column = interval_mapping[interval].label(f"{column_name}_{interval}")
-    query = query.with_entities(grouped_column)
-
-    return query, grouped_column
-
-
-def generate_chart_data_structure(results, x_axis, y_axis, chart_type):
-    """
-    Преобразует результат SQL-запроса в структуру для графика.
-    """
-    response = []
-
-    for row in results:
-        row_dict = {x_axis: row[0]}
-        if y_axis:
-            row_dict[y_axis] = row[1]
-        response.append(row_dict)
-
-    return {
-        "chart_type": chart_type,
-        "x_axis": x_axis,
-        "y_axis": y_axis if y_axis else None,
-        "data": response
-    }
 
 
 # Разбор строки having (например, 'salary_to:avg>50000~id:count>2')
@@ -80,7 +40,7 @@ def parse_having(having_str):
 
     return having_conditions
 
-from sqlalchemy import func
+
 
 aggregate_funcs = {
     "avg": func.avg,  # Среднее значение
@@ -407,7 +367,6 @@ def find_group_columns(group_by, base_model):
     return group_columns
 
 
-
 def find_aggregate_columns_for_group_by(aggregates, base_model):
     selected_aggregates = []
     if aggregates:
@@ -430,9 +389,6 @@ def apply_group_by(query, group_columns,selected_aggregates):
     elif selected_aggregates:
         query = query.with_entities(*selected_aggregates)
     return query
-
-
-
 
 def apply_sorting_of_table(query, group_columns, selected_aggregates, sort_by, base_model):
     try:

@@ -1,0 +1,22 @@
+def find_aggregate_columns_for_group_by(aggregates, base_model):
+    selected_aggregates = []
+    if aggregates:
+        agg_fields = aggregates.split(",")
+        for agg in agg_fields:
+            field, agg_type = agg.split(":")
+            column_attr = getattr(base_model, field, None)
+            if column_attr and agg_type in aggregate_funcs:
+                selected_aggregates.append(aggregate_funcs[agg_type](column_attr).label(f"{field}_{agg_type}"))
+            else:
+                raise HTTPException(status_code=400, detail=f"Некорректный агрегат '{agg}'")
+    return selected_aggregates
+
+def apply_group_by(query, group_columns,selected_aggregates):
+    # Если есть группировка и агрегаты, объединяем
+    if group_columns and selected_aggregates:
+        query = query.with_entities(*group_columns, *selected_aggregates).group_by(*group_columns)
+    elif group_columns:
+        query = query.with_entities(*group_columns).group_by(*group_columns)
+    elif selected_aggregates:
+        query = query.with_entities(*selected_aggregates)
+    return query

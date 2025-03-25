@@ -15,7 +15,7 @@ app.add_middleware(
 
 app.include_router(vacancies_table.router, prefix="/vacancies")
 app.include_router(resumes_table.router, prefix="/resume")
-app.include_router(charts.router, prefix="/vacancies")
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -8,13 +8,10 @@ import HavingFilters from "./HavingFilters";
 import SortBy from "./SortBy";
 import NotNullFilter from "./NotNullFilter";
 import LimitFilter from "./LimitFilter";
-import { vacanciesFieldsConfig } from "./vacancies.config";
-import "../styles/VacanciesTable.css";
+import "../styles/ResumeTable.css";
 
-
-
-const VacanciesTable = () => {
-    const [vacancies, setVacancies] = useState([]);
+const ResumeTable = () => {
+    const [resume, setResume] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [offset, setOffset] = useState(0);
@@ -25,41 +22,49 @@ const VacanciesTable = () => {
     const [sortBy, setSortBy] = useState("");
     const [resetTrigger, setResetTrigger] = useState(false);
     const [notNull, setNotNull] = useState("");
-    const [limit, setLimit] = useState(8);
-    const [visibleColumns, setVisibleColumns] = useState({});
+    const [limit, setLimit] = useState(8); // Значение по умолчанию = 8
+    const [visibleColumns, setVisibleColumns] = useState({}); // Состояние видимости столбцов
 
-    const hiddenColumnsByDefault = ["id", "currency", "experience", "archived", "url", "salary_to", "salary_from"];
+    // Столбцы, которые должны быть скрыты по умолчанию
+    const hiddenColumnsByDefault = ["id_resume","created_at" ,"currency", "salary", "url"];
 
+    // Инициализация видимости столбцов при первом рендере и при изменении данных
     useEffect(() => {
-        if (vacancies.length > 0) {
-            const columns = Object.keys(vacancies[0]);
+        if (resume.length > 0) {
+            const columns = Object.keys(resume[0]);
             const initialVisibility = {};
 
             columns.forEach((column) => {
+                // Если столбец уже был видим, оставляем его видимым
                 if (visibleColumns[column] !== undefined) {
                     initialVisibility[column] = visibleColumns[column];
                 } else {
+                    // Новые столбцы делаем видимыми по умолчанию, кроме тех, что в hiddenColumnsByDefault
                     initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
                 }
             });
 
+            // Если есть группировка, делаем столбец группировки видимым
             if (groupBy) {
                 initialVisibility[groupBy] = true;
             }
 
             setVisibleColumns(initialVisibility);
         }
-    }, [vacancies, groupBy]);
+    }, [resume, groupBy]);
 
+    // Сброс видимости столбцов при изменении resetTrigger
     useEffect(() => {
-        if (vacancies.length > 0) {
-            const columns = Object.keys(vacancies[0]);
+        if (resume.length > 0) {
+            const columns = Object.keys(resume[0]);
             const initialVisibility = {};
 
             columns.forEach((column) => {
+                // Сбрасываем видимость к значениям по умолчанию
                 initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
             });
 
+            // Если есть группировка, делаем столбец группировки видимым
             if (groupBy) {
                 initialVisibility[groupBy] = true;
             }
@@ -68,7 +73,7 @@ const VacanciesTable = () => {
         }
     }, [resetTrigger]);
 
-    const fetchVacancies = async (
+    const fetchResume = async (
         currentOffset,
         currentFilters,
         currentGroupBy,
@@ -84,8 +89,8 @@ const VacanciesTable = () => {
                 .join(";");
 
             const params = {
-                offset: Number(currentOffset),
-                limit: Number(currentLimit),
+                offset: Number(currentOffset), // Преобразуем в число
+                limit: Number(currentLimit),   // Преобразуем в число
             };
 
             if (filtersString) {
@@ -112,21 +117,21 @@ const VacanciesTable = () => {
                 params.not_null = currentNotNull;
             }
 
-            const response = await axios.get('http://127.0.0.1:8000/vacancies/table/', {
+            const response = await axios.get('http://127.0.0.1:8000/resume/table/', {
                 params,
             });
 
-            setVacancies(response.data.results);
+            setResume(response.data.results);
             setTotalCount(response.data.total_count);
         } catch (error) {
-            console.error('Error fetching vacancies:', error);
+            console.error('Error fetching resume:', error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        console.log("Fetching vacancies with:", {
+        console.log("Fetching resume with:", {
             offset,
             limit,
             totalCount,
@@ -137,8 +142,8 @@ const VacanciesTable = () => {
             sortBy,
             notNull,
         });
-        fetchVacancies(offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit);
-    }, [offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit, totalCount]);
+        fetchResume(offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit);
+    }, [offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit, totalCount]); // Добавили totalCount в зависимости
 
     const handleAddFilter = (newFilter) => {
         setFilters([...filters, newFilter]);
@@ -197,9 +202,10 @@ const VacanciesTable = () => {
         setNotNull(notNullValue);
     };
 
+    // Обработчик для применения лимита
     const handleApplyLimit = (newLimit) => {
-        setLimit(newLimit);
-        setOffset(0);
+        setLimit(newLimit); // Обновляем состояние limit
+        setOffset(0); // Сбрасываем offset при изменении limit
     };
 
     const handleReset = () => {
@@ -209,30 +215,33 @@ const VacanciesTable = () => {
         setHavingFilters([]);
         setSortBy("");
         setNotNull("");
-        setLimit(8);
+        setLimit(8); // Сбрасываем limit на значение по умолчанию
         setOffset(0);
-        setResetTrigger((prev) => !prev);
-        fetchVacancies(0, [], "", "", [], "", "", 8);
+        setResetTrigger((prev) => !prev); // Изменяем триггер для сброса
+        fetchResume(0, [], "", "", [], "", "", 8); // Делаем запрос с limit по умолчанию
     };
 
+    // Сброс сортировки после каждого запроса
     useEffect(() => {
-        setSortBy("");
+        setSortBy(""); // Очищаем сортировку
     }, [filters, groupBy, aggregates, havingFilters, notNull]);
 
+    // Сброс offset после каждого запроса
     useEffect(() => {
-        setOffset(0);
-    }, [filters, groupBy, aggregates, havingFilters, sortBy, notNull]);
+        setOffset(0);  // Сбрасываем offset
+    }, [filters, groupBy, aggregates, havingFilters, sortBy, notNull]); // Добавили sortBy в зависимости
 
     if (loading) {
         return <div className="loading">Loading...</div>;
     }
 
-    const columns = Object.keys(vacancies[0] || []);
+    // Получаем список столбцов для сортировки
+    const columns = Object.keys(resume[0] || []);
 
     return (
-        <div className="vacancies-table-container">
-            <h1>Вакансии</h1>
-            <p>Всего вакансий: {totalCount}</p>
+        <div className="resume-table-container">
+            <h1>Резюме</h1>
+            <p>Всего резюме: {totalCount}</p>
 
             <button onClick={handleReset} className="reset-btn">
                 Очистить всё
@@ -242,7 +251,6 @@ const VacanciesTable = () => {
                 filters={filters}
                 onAddFilter={handleAddFilter}
                 onRemoveFilter={handleRemoveFilter}
-                fieldsConfig={vacanciesFieldsConfig}
             />
 
             <GroupBy
@@ -255,7 +263,6 @@ const VacanciesTable = () => {
             <Aggregates
                 aggregates={aggregates}
                 onApplyAggregates={handleApplyAggregates}
-                fieldsConfig={vacanciesFieldsConfig}
             />
 
             {groupBy && aggregates && (
@@ -280,7 +287,7 @@ const VacanciesTable = () => {
             />
 
             <DynamicTable
-                data={vacancies}
+                data={resume}
                 visibleColumns={visibleColumns}
                 onToggleColumn={(column) => {
                     setVisibleColumns((prev) => ({
@@ -290,10 +297,11 @@ const VacanciesTable = () => {
                 }}
             />
 
+            {/* Новый компонент для лимита */}
             <LimitFilter
                 limit={limit}
                 onApplyLimit={handleApplyLimit}
-                resetTrigger={resetTrigger}
+                resetTrigger={resetTrigger} // Передаем триггер для сброса
             />
 
             <div className="pagination">
@@ -316,4 +324,4 @@ const VacanciesTable = () => {
     );
 };
 
-export default VacanciesTable;
+export default ResumeTable;
