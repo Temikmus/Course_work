@@ -250,6 +250,7 @@ const VacanciesTable = () => {
                 onApplyGroupBy={handleApplyGroupBy}
                 onClearGroupBy={handleClearGroupBy}
                 resetTrigger={resetTrigger}
+                fieldsConfig={vacanciesFieldsConfig}
             />
 
             <Aggregates

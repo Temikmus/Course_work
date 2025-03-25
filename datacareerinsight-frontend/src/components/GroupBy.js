@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { fields } from "./constants"; // Импортируем список полей
+// import { fields } from "./constants"; // Импортируем список полей
 
-const GroupBy = ({ groupBy, onApplyGroupBy, onClearGroupBy, resetTrigger }) => {
+const GroupBy = ({ groupBy, onApplyGroupBy, onClearGroupBy, resetTrigger, fieldsConfig = {
+    fields: []
+}}) => {
     const [showColumnMenu, setShowColumnMenu] = useState(false); // Состояние для отображения меню
     const [selectedColumns, setSelectedColumns] = useState([]); // Выбранные столбцы
 
+    const {
+        fields
+    } = fieldsConfig;
     // Синхронизация внутреннего состояния с пропсом groupBy
     useEffect(() => {
         if (groupBy) {
