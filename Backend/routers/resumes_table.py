@@ -1,85 +1,70 @@
 import re
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_, cast, case
-from database import SessionLocal, get_db
+from database import get_db
 from models import Resume
-from datetime import datetime
-from sqlalchemy.dialects.postgresql import ARRAY, VARCHAR
-from sqlalchemy.types import String, DateTime, Date, ARRAY
-from sqlalchemy.sql.functions import percentile_cont
-from sqlalchemy.sql.expression import select
 import sql_functions
-
 
 router = APIRouter()
 
 
-
-
-"""
-Для работы с русскими зп - все столбцы будут идти с приставкой russian_...
-То есть если пользователь хочет видеть зп с русскими столбцами, то вместо salary_to будет в запросе russian_salary_to
-"""
-
-@router.get("/table/")
-def get_resume_main_table(
-        specific_fields: str = Query(None, description="Выбор выводимых полей"),
-        filters: str = Query(None, description="Фильтры для полей"),
-        group_by: str = Query(None, description="Поле для группировки"),
-        having: str = Query(None, description="Фильтры для полей с агрегирующими функциями"),
-        aggregates: str = Query(None, description="Агрегаты (например, 'salary_to:AVG,salary_from:SUM')"),
-        not_null: str = Query(None, description="Столбцы, которые должны быть со значениями"),
-        sort_by: str = Query(None, description="Сортировка по полю (например, 'salary_from:asc' или 'title:desc')"),
-        limit: int = Query(8, ge=1, le=100, description="Количество вакансий для отображения (максимум 100)"),
-        offset: int = Query(0, description="Смещение для пагинации"),
-        db: Session = Depends(get_db)
+def fetch_resumes_data(
+        db: Session,
+        specific_fields: str = None,
+        filters: str = None,
+        group_by: str = None,
+        having: str = None,
+        aggregates: str = None,
+        not_null: str = None,
+        sort_by: str = None,
+        limit: int = 8,
+        offset: int = 0,
 ):
+    """Основная логика получения данных по резюме"""
     query = db.query(Resume)
 
-
-    # Обработка specific_fields (если нужно вернуть только определенные поля)
-    if specific_fields and (not (group_by)):
-        fields = specific_fields.split(",")  # Пример: "salary_from,salary_to"
+    # Обработка specific_fields
+    if specific_fields and (not group_by):
+        fields = specific_fields.split(",")
         if "url" not in fields:
             fields.append("url")
         query = sql_functions.add_columns_to_result(query, fields, Resume)
-
 
     # Обработка фильтров
     if filters:
         tuple_of_filters = sql_functions.parse_filters(filters)
         for column, value in tuple_of_filters.items():
             if len(value) == 3:
-                query = sql_functions.apply_filter_for_column(query, column, value[1], value[0], value[2], Resume)
+                query = sql_functions.apply_filter_for_column(
+                    query, column, value[1], value[0], value[2], Resume
+                )
             else:
-                raise HTTPException(status_code=400, detail=f"Значение '{column}:{value}' неправильно заполнено")
+                raise ValueError(f"Неправильный фильтр: {column}:{value}")
 
-    # Заполняем столбцы для группировки
+    # Группировка и агрегация
     group_columns = sql_functions.find_group_columns(group_by, Resume)
-    # Заполняем столбцы, которые будут агрегрироваться в группировке
     selected_aggregates = sql_functions.find_aggregate_columns_for_group_by(aggregates, Resume)
-    # Применяем группировку (если ее нет, то query останется прежним)
     query = sql_functions.apply_group_by(query, group_columns, selected_aggregates)
-    # Применяем сортировку
+
+    # Сортировка
     query = sql_functions.apply_sorting_of_table(query, group_columns, selected_aggregates, sort_by, Resume)
-    # Применяем not_null
+
+    # Фильтрация NULL значений
     query = sql_functions.apply_not_null_for_columns(query, not_null, Resume)
-    # Применяем having (если группировка есть)
+
+    # Условия HAVING
     if group_by and having:
         query = sql_functions.apply_having(query, having, selected_aggregates, Resume)
 
-    total_count = query.count()
-
     # Пагинация
+    total_count = query.count()
     if offset:
         query = query.offset(offset)
-    # Кол-во сообщений
     if limit is not None:
         query = query.limit(limit)
 
+    # Формирование результата
     results = query.all()
-
     if specific_fields or group_by or aggregates:
         response = [dict(zip([col["name"] for col in query.column_descriptions], row)) for row in results]
     else:
@@ -89,3 +74,33 @@ def get_resume_main_table(
         "total_count": total_count,
         "results": response
     }
+
+
+@router.get("/table/")
+def get_resume_main_table(
+        specific_fields: str = Query(None, description="Выбор выводимых полей"),
+        filters: str = Query(None, description="Фильтры для полей"),
+        group_by: str = Query(None, description="Поле для группировки"),
+        having: str = Query(None, description="Фильтры для полей с агрегирующими функциями"),
+        aggregates: str = Query(None, description="Агрегаты (например, 'salary:AVG,age:COUNT')"),
+        not_null: str = Query(None, description="Столбцы, которые должны быть со значениями"),
+        sort_by: str = Query(None, description="Сортировка по полю"),
+        limit: int = Query(8, ge=1, le=100, description="Количество записей (максимум 100)"),
+        offset: int = Query(0, description="Смещение для пагинации"),
+        db: Session = Depends(get_db)
+):
+    try:
+        return fetch_resumes_data(
+            db=db,
+            specific_fields=specific_fields,
+            filters=filters,
+            group_by=group_by,
+            having=having,
+            aggregates=aggregates,
+            not_null=not_null,
+            sort_by=sort_by,
+            limit=limit,
+            offset=offset,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

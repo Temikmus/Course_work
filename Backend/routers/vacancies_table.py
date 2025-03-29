@@ -14,67 +14,48 @@ import sql_functions
 
 router = APIRouter()
 
-
-
-
-"""
-Для работы с русскими зп - все столбцы будут идти с приставкой russian_...
-То есть если пользователь хочет видеть зп с русскими столбцами, то вместо salary_to будет в запросе russian_salary_to
-"""
-
-@router.get("/table/")
-def get_vacancies_main_table(
-        specific_fields: str = Query(None, description="Выбор выводимых полей"),
-        filters: str = Query(None, description="Фильтры для полей"),
-        group_by: str = Query(None, description="Поле для группировки"),
-        having: str = Query(None, description="Фильтры для полей с агрегирующими функциями"),
-        aggregates: str = Query(None, description="Агрегаты (например, 'salary_to:AVG,salary_from:SUM')"),
-        not_null: str = Query(None, description="Столбцы, которые должны быть со значениями"),
-        sort_by: str = Query(None, description="Сортировка по полю (например, 'salary_from:asc' или 'title:desc')"),
-        limit: int = Query(8, ge=1, le=100, description="Количество вакансий для отображения (максимум 100)"),
-        offset: int = Query(0, description="Смещение для пагинации"),
-        db: Session = Depends(get_db)
+def fetch_vacancies_data(
+    db: Session,
+    specific_fields: str = None,
+    filters: str = None,
+    group_by: str = None,
+    having: str = None,
+    aggregates: str = None,
+    not_null: str = None,
+    sort_by: str = None,
+    limit: int = 8,
+    offset: int = 0,
 ):
+    """Основная логика получения данных, которую можно вызывать и из API, и из других функций."""
     query = db.query(Vacancy)
 
-
-    # Обработка specific_fields (если нужно вернуть только определенные поля)
-    if specific_fields and (not (group_by)):
-        fields = specific_fields.split(",")  # Пример: "salary_from,salary_to"
+    if specific_fields and (not group_by):
+        fields = specific_fields.split(",")
         if "url" not in fields:
             fields.append("url")
         query = sql_functions.add_columns_to_result(query, fields, Vacancy)
 
-
-    # Обработка фильтров
     if filters:
         tuple_of_filters = sql_functions.parse_filters(filters)
         for column, value in tuple_of_filters.items():
             if len(value) == 3:
                 query = sql_functions.apply_filter_for_column(query, column, value[1], value[0], value[2], Vacancy)
             else:
-                raise HTTPException(status_code=400, detail=f"Значение '{column}:{value}' неправильно заполнено")
+                raise ValueError(f"Неправильный фильтр: {column}:{value}")
 
-    # Заполняем столбцы для группировки
     group_columns = sql_functions.find_group_columns(group_by, Vacancy)
-    # Заполняем столбцы, которые будут агрегрироваться в группировке
     selected_aggregates = sql_functions.find_aggregate_columns_for_group_by(aggregates, Vacancy)
-    # Применяем группировку (если ее нет, то query останется прежним)
     query = sql_functions.apply_group_by(query, group_columns, selected_aggregates)
-    # Применяем сортировку
     query = sql_functions.apply_sorting_of_table(query, group_columns, selected_aggregates, sort_by, Vacancy)
-    # Применяем not_null
     query = sql_functions.apply_not_null_for_columns(query, not_null, Vacancy)
-    # Применяем having (если группировка есть)
+
     if group_by and having:
         query = sql_functions.apply_having(query, having, selected_aggregates, Vacancy)
 
     total_count = query.count()
 
-    # Пагинация
     if offset:
         query = query.offset(offset)
-    # Кол-во сообщений
     if limit is not None:
         query = query.limit(limit)
 
@@ -89,3 +70,36 @@ def get_vacancies_main_table(
         "total_count": total_count,
         "results": response
     }
+
+
+
+"""
+Для работы с русскими зп - все столбцы будут идти с приставкой russian_...
+То есть если пользователь хочет видеть зп с русскими столбцами, то вместо salary_to будет в запросе russian_salary_to
+"""
+
+@router.get("/table/")
+def get_vacancies_main_table(
+    specific_fields: str = Query(None),
+    filters: str = Query(None),
+    group_by: str = Query(None),
+    having: str = Query(None),
+    aggregates: str = Query(None),
+    not_null: str = Query(None),
+    sort_by: str = Query(None),
+    limit: int = Query(8, ge=1, le=100),
+    offset: int = Query(0),
+    db: Session = Depends(get_db),
+):
+    return fetch_vacancies_data(
+        db=db,
+        specific_fields=specific_fields,
+        filters=filters,
+        group_by=group_by,
+        having=having,
+        aggregates=aggregates,
+        not_null=not_null,
+        sort_by=sort_by,
+        limit=limit,
+        offset=offset,
+    )
