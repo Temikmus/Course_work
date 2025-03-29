@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import ARRAY, VARCHAR
 from sqlalchemy.types import String, DateTime, Date, ARRAY
 from sqlalchemy.sql.functions import percentile_cont
 from sqlalchemy.sql.expression import select
-import sql_fucntions
+import sql_functions
 
 
 router = APIRouter()
@@ -43,31 +43,31 @@ def get_resume_main_table(
         fields = specific_fields.split(",")  # Пример: "salary_from,salary_to"
         if "url" not in fields:
             fields.append("url")
-        query = sql_fucntions.add_columns_to_result(query, fields, Resume)
+        query = sql_functions.add_columns_to_result(query, fields, Resume)
 
 
     # Обработка фильтров
     if filters:
-        tuple_of_filters = sql_fucntions.parse_filters(filters)
+        tuple_of_filters = sql_functions.parse_filters(filters)
         for column, value in tuple_of_filters.items():
             if len(value) == 3:
-                query = sql_fucntions.apply_filter_for_column(query, column, value[1], value[0], value[2], Resume)
+                query = sql_functions.apply_filter_for_column(query, column, value[1], value[0], value[2], Resume)
             else:
                 raise HTTPException(status_code=400, detail=f"Значение '{column}:{value}' неправильно заполнено")
 
     # Заполняем столбцы для группировки
-    group_columns = sql_fucntions.find_group_columns(group_by, Resume)
+    group_columns = sql_functions.find_group_columns(group_by, Resume)
     # Заполняем столбцы, которые будут агрегрироваться в группировке
-    selected_aggregates = sql_fucntions.find_aggregate_columns_for_group_by(aggregates, Resume)
+    selected_aggregates = sql_functions.find_aggregate_columns_for_group_by(aggregates, Resume)
     # Применяем группировку (если ее нет, то query останется прежним)
-    query = sql_fucntions.apply_group_by(query, group_columns, selected_aggregates)
+    query = sql_functions.apply_group_by(query, group_columns, selected_aggregates)
     # Применяем сортировку
-    query = sql_fucntions.apply_sorting_of_table(query, group_columns, selected_aggregates, sort_by, Resume)
+    query = sql_functions.apply_sorting_of_table(query, group_columns, selected_aggregates, sort_by, Resume)
     # Применяем not_null
-    query = sql_fucntions.apply_not_null_for_columns(query, not_null, Resume)
+    query = sql_functions.apply_not_null_for_columns(query, not_null, Resume)
     # Применяем having (если группировка есть)
     if group_by and having:
-        query = sql_fucntions.apply_having(query, having, selected_aggregates, Resume)
+        query = sql_functions.apply_having(query, having, selected_aggregates, Resume)
 
     total_count = query.count()
 
@@ -89,4 +89,3 @@ def get_resume_main_table(
         "total_count": total_count,
         "results": response
     }
-

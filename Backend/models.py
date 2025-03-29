@@ -54,6 +54,3 @@ class Resume(Base):
     is_driver = Column(Boolean, nullable=True)  # Наличие водительских прав
     professional_roles = Column(ARRAY(Text), nullable=True)  # Профессиональные роли (массив)
     url = Column(Text)  # Ссылка на резюме
-
-
-

@@ -123,10 +123,7 @@ Accept: application/json
 GET http://127.0.0.1:8000/vacancies/table/?group_by=address&aggregates=salary_to:avg&not_null=salary_to
 Accept: application/json
 
-###
 
-GET http://127.0.0.1:8000/vacancies/table/?specific_fields=russian_salary_from&filters=russian_salary_from>avg(russian_salary_from)
-Accept: application/json
 
 ###
 
