@@ -1,5 +1,5 @@
 import GenericTable from './GenericTable';
-import { resumeFieldsConfig } from './configs/resume.config';
+import { resumeFieldsConfig } from '../configs/resume.config';
 
 const ResumeTable = () => (
     <GenericTable

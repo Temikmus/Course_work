@@ -87,7 +87,7 @@ def get_vacancies_main_table(
     aggregates: str = Query(None),
     not_null: str = Query(None),
     sort_by: str = Query(None),
-    limit: int = Query(8, ge=1, le=100),
+    limit: int = Query(8, ge=1),
     offset: int = Query(0),
     db: Session = Depends(get_db),
 ):

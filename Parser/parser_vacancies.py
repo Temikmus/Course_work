@@ -208,8 +208,8 @@ def get_vacancies_with_dates(vacancy_name, date_list, access_token):
     return
 
 
-start_date = datetime(2025, 1, 10)
-end_date = datetime(2025, 3, 24)
+start_date = datetime(2024, 1, 1)
+end_date = datetime(2025, 3, 30)
 date_list = generate_date_list(start_date, end_date)
 
 #ключевые слова для фильтрации
@@ -225,10 +225,10 @@ keywords = [
 
 
 #ключевые слова для поиска
-vacancies_name = ["Маркетинговый аналитик", "Продуктовый аналитик", "BI-аналитик", "Гейм-аналитик", "Финансовый аналитик",
+vacancies_name = ["Аналитик", "Аналитик данных", "BI-аналитик", "Гейм-аналитик", "Финансовый аналитик",
             "Системный аналитик", "Веб-аналитик", "Аналитик маркетплейсов", "Аналитик 1-С",
-            "SMM-аналитик", "Аналитик данных", "UX-аналитик", "Data Analyst", "Data Scientist", "Бизнес-аналитик", "Business Intelligence Analyst", "Аналитик больших данных",
-            "Big Data Analyst", "Аналитик машинного обучения", "ML Analyst", "Аналитик"]
+            "SMM-аналитик", "Продуктовый аналитик", "UX-аналитик", "Data Analyst", "Data Scientist", "Бизнес-аналитик", "Business Intelligence Analyst", "Аналитик больших данных",
+            "Big Data Analyst", "Аналитик машинного обучения", "ML Analyst", "Маркетинговый аналитик"]
 
 count = 0 #кол-во добавленных резюме
 

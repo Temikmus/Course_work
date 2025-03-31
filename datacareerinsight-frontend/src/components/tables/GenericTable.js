@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import DynamicTable from './for_tables/DynamicTable';
-import Filters from './for_tables/Filters';
-import GroupBy from './for_tables/GroupBy';
-import Aggregates from './for_tables/Aggregates';
-import HavingFilters from './for_tables/HavingFilters';
-import SortBy from './for_tables/SortBy';
-import NotNullFilter from './for_tables/NotNullFilter';
-import LimitFilter from './for_tables/LimitFilter';
+import DynamicTable from '../for_tables/DynamicTable';
+import Filters from '../for_tables/Filters';
+import GroupBy from '../for_tables/GroupBy';
+import Aggregates from '../for_tables/Aggregates';
+import HavingFilters from '../for_tables/HavingFilters';
+import SortBy from '../for_tables/SortBy';
+import NotNullFilter from '../for_tables/NotNullFilter';
+import LimitFilter from '../for_tables/LimitFilter';
 
 const GenericTable = ({
                           title = "Данные",

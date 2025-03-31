@@ -1,5 +1,5 @@
 import GenericTable from './GenericTable';
-import { vacanciesFieldsConfig } from './configs/vacancies.config';
+import { vacanciesFieldsConfig } from '../configs/vacancies.config';
 
 const VacanciesTable = () => (
     <GenericTable

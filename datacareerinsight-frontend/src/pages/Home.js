@@ -1,7 +1,7 @@
 // src/pages/Home.js
 import React from 'react';
-import Vacancies from '../components/VacanciesTable';  // Импорт компонента вакансий
-import Resume from '../components/ResumeTable';
+import Vacancies from '../components/tables/VacanciesTable';  // Импорт компонента вакансий
+import Resume from '../components/tables/ResumeTable';
 
 const Home = () => {
     return (
