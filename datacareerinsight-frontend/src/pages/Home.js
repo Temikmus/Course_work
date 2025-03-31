@@ -2,6 +2,10 @@
 import React from 'react';
 import Vacancies from '../components/tables/VacanciesTable';  // Импорт компонента вакансий
 import Resume from '../components/tables/ResumeTable';
+import { ColumnCountChart } from '../components/charts/1st_graph/ColumnCountChart';
+import '../styles/ColumnCountChart.css';
+import '../styles/VacanciesTable.css';
+import '../styles/ResumeTable.css';
 
 const Home = () => {
     return (
@@ -11,6 +15,7 @@ const Home = () => {
             {/* Компоненты вакансий и графиков */}
             <Vacancies />
             <Resume />
+            <ColumnCountChart model="vacancies" />
         </div>
     );
 };
