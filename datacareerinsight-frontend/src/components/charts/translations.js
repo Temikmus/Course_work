@@ -48,3 +48,20 @@ export const columnTranslations = {
         id_resume: 'ID'
     }
 };
+
+export const aggregateTranslations = {
+    avg: 'Среднее',
+    sum: 'Сумма',
+    max: 'Максимум',
+    min: 'Минимум',
+    count: 'Количество',
+    median: 'Медиана',
+    stddev: 'Стандартное отклонение',
+    variance: 'Дисперсия',
+    mode: 'Мода'
+};
+
+export const chartTitles = {
+    timeDistribution: 'Динамика изменения',
+    columnCount: 'Распределение по'
+};

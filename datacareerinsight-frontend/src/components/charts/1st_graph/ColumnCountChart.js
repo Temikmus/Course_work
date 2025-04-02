@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useChartData } from '../hooks/useChartData';
 import { useChartFilters } from '../hooks/useChartFilters';
-import { BarChart, PieChart, ScatterChart } from './ChartVisualizations';
+import { BarChart, PieChart, ScatterChart } from './ColumnCountChartVisualizations';
 import Filters from '../../for_tables/Filters';
 import { resumeFieldsConfig } from '../../configs/resume.config.js';
 import { vacanciesFieldsConfig } from '../../configs/vacancies.config';
 import { columnTranslations, chartTitles } from '../translations';
-
+import './ColumnCountChart.css'
 
 const columnOptions = {
     vacancies: {
-        availableColumns: ['skills', 'company_name', 'work_format', 'type_of_employment'],
+        availableColumns: [
+            "title", "company_name", "currency", "experience", "type_of_employment",
+            "work_format", "skills", "address", "min_experience", "max_experience",
+            "salary_to", "salary_from", "russian_salary_to", "russian_salary_from",
+            "bonus", "published_at", "archived", "url", "id"
+        ],
         filtersConfig: vacanciesFieldsConfig
     },
     resume: {
-        availableColumns: ['skill_set', 'professional_roles', 'employments', 'area'],
+        availableColumns: [
+            "id_resume", "title", "created_at", "updated_at", "age", "gender",
+            "salary", "russian_salary", "currency", "photo", "total_experience",
+            "citizenship", "area", "level_education", "university", "count_additional_courses",
+            "employments", "experience", "language_eng", "language_zho", "schedules",
+            "skill_set", "is_driver", "professional_roles", "url"
+        ],
         filtersConfig: resumeFieldsConfig
     }
 };

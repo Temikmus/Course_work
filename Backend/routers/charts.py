@@ -28,10 +28,10 @@ def get_column_count_chart(
     # Выбираем модель
     if model == "vacancies":
         result = fetch_vacancies_data(db=db,filters=filters, group_by=column, aggregates=f'{column}:count',
-                             sort_by=f'{column}:count:desc', limit=limit)
+                             sort_by=f'{column}:count:desc', limit=limit, not_null=column)
     elif model == "resume":
         result = fetch_resumes_data(db=db,filters=filters, group_by=column, aggregates=f'{column}:count',
-                             sort_by=f'{column}:count:desc', limit=limit)
+                             sort_by=f'{column}:count:desc', limit=limit, not_null=column)
     else:
         raise HTTPException(status_code=400, detail="Неподдерживаемая модель")
 

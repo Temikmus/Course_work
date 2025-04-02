@@ -3,7 +3,8 @@ import React from 'react';
 import Vacancies from '../components/tables/VacanciesTable';  // Импорт компонента вакансий
 import Resume from '../components/tables/ResumeTable';
 import { ColumnCountChart } from '../components/charts/1st_graph/ColumnCountChart';
-import '../styles/ColumnCountChart.css';
+import { TimeDistributionChart } from '../components/charts/2nd_graph/TimeDistributionChart';
+
 import '../styles/VacanciesTable.css';
 import '../styles/ResumeTable.css';
 
@@ -16,6 +17,7 @@ const Home = () => {
             <Vacancies />
             <Resume />
             <ColumnCountChart model="vacancies" />
+            <TimeDistributionChart model="resume" />
         </div>
     );
 };

@@ -268,8 +268,8 @@ else:
 
 
 
-start_date = datetime(2025, 1, 1)
-end_date = datetime(2025, 1, 29)
+start_date = datetime(2024, 12, 1)
+end_date = datetime(2024, 12, 29)
 date_list = generate_date_list(start_date, end_date)
 date_list.reverse()
 
