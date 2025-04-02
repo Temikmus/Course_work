@@ -8,6 +8,7 @@ import HavingFilters from '../for_tables/HavingFilters';
 import SortBy from '../for_tables/SortBy';
 import NotNullFilter from '../for_tables/NotNullFilter';
 import LimitFilter from '../for_tables/LimitFilter';
+import '../../styles/VacanciesTable.css'
 
 const GenericTable = ({
                           title = "Данные",

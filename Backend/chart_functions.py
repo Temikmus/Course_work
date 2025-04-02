@@ -119,3 +119,14 @@ def get_data_for_metric_column(result, column, metric_column, aggregations):
         count_values.append(item[f'{column}_count'])
     return labels,values,count_values
 
+def is_number(value):
+    if isinstance(value, (int, float)):
+        return True
+    elif isinstance(value, str):
+        # Проверяем, можно ли строку преобразовать в число
+        try:
+            float(value)  # Проверяем и целые, и дробные числа
+            return True
+        except ValueError:
+            return False
+    return False

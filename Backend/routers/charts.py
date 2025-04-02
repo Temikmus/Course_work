@@ -97,7 +97,7 @@ def get_time_distribution_chart(
 def get_metric_column_chart(
     model: str = Query(..., description="Модель (vacancies или resume)"),
     metric_column: str = Query(..., description="Столбец с метрическими данными"),
-    aggregations: str = Query(..., description="Агрегация для столбца с зарплатой"),
+    aggregations: str = Query(..., description="Агрегация для метрического столбца"),
     column: str = Query(..., description="Столбец для сравнения"),
     chart_type: str = Query("bar", description="Тип графика (bar, pie, scatter)"),
     filters: str = Query(None, description="Фильтры как в vacancies"),
@@ -107,13 +107,15 @@ def get_metric_column_chart(
     # Выбираем модель
     if model == "vacancies":
         result = fetch_vacancies_data(db=db,filters=filters, group_by=column, aggregates=f'{metric_column}:{aggregations},{column}:count',
-                                      sort_by=f'{column}:count:desc', limit=limit, not_null=column)['results']
+                                      sort_by=f'{column}:count:desc', limit=limit, not_null=f'{column},{metric_column}')['results']
     elif model == "resume":
         result = fetch_resumes_data(db=db,filters=filters, group_by=column, aggregates=f'{metric_column}:{aggregations},{column}:count',
-                                      sort_by=f'{column}:count:desc', limit=limit, not_null=column)['results']
+                                      sort_by=f'{column}:count:desc', limit=limit, not_null=f'{column},{metric_column}')['results']
     else:
         raise HTTPException(status_code=400, detail="Неподдерживаемая модель")
-
+    if result:
+        if chart_functions.is_number(result[0][column]):
+            result = sorted(result, key=lambda x: x[column])
     data = chart_functions.get_data_for_metric_column(result, column, metric_column, aggregations)
     if data is None:
         labels, values, count_values = None, None, None

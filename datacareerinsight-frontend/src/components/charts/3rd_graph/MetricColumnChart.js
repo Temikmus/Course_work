@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useChartData } from '../hooks/useChartData';
 import { useChartFilters } from '../hooks/useChartFilters';
-import { TimeBarChart, TimeLineChart, TimeScatterChart } from './TimeDistributionChartVizualizations';
+import { MetricColumnBarChart, MetricColumnLineChart, MetricColumnPieChart } from './MetricColumnChartVizualizations';
 import Filters from '../../for_tables/Filters';
 import { resumeFieldsConfig } from '../../configs/resume.config';
 import { vacanciesFieldsConfig } from '../../configs/vacancies.config';
 import { columnTranslations, aggregateTranslations } from '../translations';
-import './TimeDistributionChart.css';
-
+import './MetricColumnChart.css';
+import { Chart as ChartJS } from 'chart.js';
 
 const columnOptions = {
     vacancies: {
@@ -17,12 +17,11 @@ const columnOptions = {
             "salary_to", "salary_from", "russian_salary_to", "russian_salary_from",
             "bonus", "published_at", "archived", "url", "id"
         ],
-        numericColumns: [
+        metricColumns: [
             "salary_to", "salary_from", "russian_salary_to", "russian_salary_from",
             "min_experience", "max_experience", "bonus", "id"
         ],
-        filtersConfig: vacanciesFieldsConfig,
-        timeColumn: 'published_at'
+        filtersConfig: vacanciesFieldsConfig
     },
     resume: {
         availableColumns: [
@@ -32,20 +31,20 @@ const columnOptions = {
             "employments", "experience", "language_eng", "language_zho", "schedules",
             "skill_set", "is_driver", "professional_roles", "url"
         ],
-        numericColumns: [
+        metricColumns: [
             "age", "salary", "russian_salary", "total_experience",
             "count_additional_courses"
         ],
-        filtersConfig: resumeFieldsConfig,
-        timeColumn: 'updated_at'
+        filtersConfig: resumeFieldsConfig
     }
 };
 
-export const TimeDistributionChart = ({ model = 'vacancies' }) => {
+export const MetricColumnChart = ({ model = 'vacancies' }) => {
+    const [metricColumn, setMetricColumn] = useState(columnOptions[model].metricColumns[0]);
     const [column, setColumn] = useState(columnOptions[model].availableColumns[0]);
-    const [aggregate, setAggregate] = useState(null);
-    const [chartType, setChartType] = useState('line');
-    const isNumeric = columnOptions[model].numericColumns.includes(column);
+    const [aggregate, setAggregate] = useState('avg');
+    const [chartType, setChartType] = useState('bar');
+    const [limit, setLimit] = useState(10);
 
     const {
         filters,
@@ -55,80 +54,81 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
         getFiltersQuery
     } = useChartFilters();
 
-    const getAvailableAggregates = () => {
-        return isNumeric
-            ? ['avg', 'sum', 'max', 'min', 'median', 'mode', 'stddev', 'variance']
-            : ['mode'];
-    };
-
-    const availableAggregates = getAvailableAggregates();
-
     const {
         data,
         loading,
         error,
         refetch
     } = useChartData(
-        '/charts/time_distribution/',
+        '/charts/metric_column/',
         {},
         {
             model,
+            metric_column: metricColumn,
+            aggregations: aggregate,
             column,
-            aggregates: aggregate,
             chart_type: chartType,
+            limit,
             filters: getFiltersQuery()
-        },
-        !!aggregate
+        }
     );
 
     useEffect(() => {
-        if (availableAggregates.length > 0 && !aggregate) {
-            setAggregate(availableAggregates[0]);
-        }
-    }, [column, availableAggregates]);
-
-    const handleColumnChange = (newColumn) => {
-        setColumn(newColumn);
-        setAggregate(null);
-    };
+        return () => {
+            // Уничтожаем все чарты при размонтировании
+            ChartJS.getChart('metricColumnChart')?.destroy();
+        };
+    }, []);
 
     const renderChart = () => {
-        if (!aggregate) return <div className="no-data">Выберите агрегацию</div>;
         if (loading) return <div className="loading">Загрузка данных...</div>;
         if (error) return <div className="error">Ошибка: {error}</div>;
         if (!data?.data?.labels?.length) return <div className="no-data">Нет данных для отображения</div>;
 
         const translatedAggregate = aggregateTranslations[aggregate] || aggregate;
-        const title = `${columnTranslations[model][column] || column} (${translatedAggregate})`;
+        const title = `${columnTranslations[model][metricColumn] || metricColumn} (${translatedAggregate})`;
 
         const chartProps = {
-            labels: data.data.labels,
+            labels: data.data.labels.map(label => String(label)), // Преобразуем в строки
             values: data.data.values,
             countValues: data.data.count_values,
-            title: title,
-            isNumeric: isNumeric,
-            modeValues: !isNumeric ? data.data.values : null
+            title: title
         };
 
         switch (chartType) {
-            case 'bar':
-                return <TimeBarChart {...chartProps} />;
-            case 'scatter':
-                return <TimeScatterChart {...chartProps} />;
+            case 'line':
+                return <MetricColumnLineChart {...chartProps} />;
+            case 'pie':
+                return <MetricColumnPieChart {...chartProps} />;
             default:
-                return <TimeLineChart {...chartProps} />;
+                return <MetricColumnBarChart {...chartProps} />;
         }
     };
 
+
     return (
-        <div className="time-chart-container">
-            <div className="time-chart-header">
-                <h2>Динамика {columnTranslations[model][column] || column}</h2>
-                <div className="time-chart-controls">
+        <div className="metric-column-container" id="metricColumnChart">
+            <div className="metric-column-header">
+                <h2>
+                    {columnTranslations[model][metricColumn] || metricColumn} по {columnTranslations[model][column] || column}
+                </h2>
+                <div className="metric-column-controls">
+                    <select
+                        value={metricColumn}
+                        onChange={(e) => setMetricColumn(e.target.value)}
+                        className="metric-column-select"
+                    >
+                        {columnOptions[model].metricColumns.map(col => (
+                            <option key={col} value={col}>
+                                {columnTranslations[model][col] || col}
+                            </option>
+                        ))}
+                    </select>
+
                     <select
                         value={column}
-                        onChange={(e) => handleColumnChange(e.target.value)}
-                        className="time-chart-select"
+                        onChange={(e) => setColumn(e.target.value)}
+                        className="metric-column-select"
                     >
                         {columnOptions[model].availableColumns.map(col => (
                             <option key={col} value={col}>
@@ -138,13 +138,11 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
                     </select>
 
                     <select
-                        value={aggregate || ''}
+                        value={aggregate}
                         onChange={(e) => setAggregate(e.target.value)}
-                        className="time-chart-select"
-                        disabled={availableAggregates.length === 0}
+                        className="metric-column-select"
                     >
-
-                        {availableAggregates.map(agg => (
+                        {['avg', 'sum', 'max', 'min', 'median'].map(agg => (
                             <option key={agg} value={agg}>
                                 {aggregateTranslations[agg] || agg}
                             </option>
@@ -154,12 +152,22 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
                     <select
                         value={chartType}
                         onChange={(e) => setChartType(e.target.value)}
-                        className="time-chart-select"
+                        className="metric-column-select"
                     >
-                        <option value="line">Линейный</option>
-                        <option value="bar">Столбчатый</option>
-                        <option value="scatter">Точечный</option>
+                        <option value="bar">Столбчатая</option>
+                        <option value="line">Линейная</option>
+                        <option value="pie">Круговая</option>
                     </select>
+
+                    <input
+                        type="number"
+                        value={limit}
+                        onChange={(e) => setLimit(Math.max(1, Math.min(50, Number(e.target.value))))}
+                        min="1"
+                        max="50"
+                        className="metric-column-input"
+                        placeholder="Лимит"
+                    />
                 </div>
             </div>
 
@@ -170,11 +178,11 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
                 fieldsConfig={columnOptions[model].filtersConfig}
             />
 
-            <div className="time-chart-content">
+            <div className="metric-column-content">
                 {renderChart()}
                 {data?.total_count && (
-                    <div className="time-chart-footer">
-                        Всего периодов: {data.total_count}
+                    <div className="metric-column-footer">
+                        Всего записей: {data.total_count}
                     </div>
                 )}
             </div>
