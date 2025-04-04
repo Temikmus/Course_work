@@ -5,6 +5,8 @@ import Resume from '../components/tables/ResumeTable';
 import { ColumnCountChart } from '../components/charts/1st_graph/ColumnCountChart';
 import { TimeDistributionChart } from '../components/charts/2nd_graph/TimeDistributionChart';
 import { MetricColumnChart } from '../components/charts/3rd_graph/MetricColumnChart';
+import { MetricDistributionChart } from '../components/charts/4th_graph/MetricDistributionChart';
+
 
 // import '../styles/VacanciesTable.css';
 // import '../styles/ResumeTable.css';
@@ -19,6 +21,7 @@ const Home = () => {
             <ColumnCountChart model="vacancies" />
             <TimeDistributionChart model="resume" />
             <MetricColumnChart model="vacancies" />
+            <MetricDistributionChart model="vacancies" />
         </div>
     );
 };

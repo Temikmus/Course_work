@@ -93,7 +93,7 @@ def get_data_for_metric_distribution(result, column, number_range):
     min_number = result[0][column]
     min_value = result[0][column]
     for i in range(number_range):
-        ranges.append({'min_value': min_value, 'max_value': min_value + len_range})
+        ranges.append({'min_value': round(min_value,2), 'max_value': round(min_value + len_range,2)})
         min_value += len_range
     for item in result:
         number = item[column]
