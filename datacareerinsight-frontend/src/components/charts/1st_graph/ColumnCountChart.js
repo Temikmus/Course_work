@@ -14,7 +14,7 @@ const columnOptions = {
             "title", "company_name", "currency", "experience", "type_of_employment",
             "work_format", "skills", "address", "min_experience", "max_experience",
             "salary_to", "salary_from", "russian_salary_to", "russian_salary_from",
-            "bonus", "published_at", "archived", "url", "id"
+             "published_at", "archived", "url", "id"
         ],
         filtersConfig: vacanciesFieldsConfig
     },

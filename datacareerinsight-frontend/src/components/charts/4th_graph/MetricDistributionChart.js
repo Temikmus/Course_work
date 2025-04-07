@@ -12,7 +12,7 @@ const columnOptions = {
     vacancies: {
         availableColumns: [
             "salary_to", "salary_from", "russian_salary_to", "russian_salary_from",
-            "min_experience", "max_experience", "bonus", "id"
+            "min_experience", "max_experience"
         ],
         filtersConfig: vacanciesFieldsConfig
     },

@@ -24,7 +24,6 @@ class Vacancy(Base):
     salary_from = Column(Integer, nullable=True)  # Минимальная зарплата
     russian_salary_to = Column(Integer, nullable=True)  # Максимальная зарплата в рублях
     russian_salary_from = Column(Integer, nullable=True)  # Минимальная зарплата в рублях
-    bonus = Column(Integer, nullable=True)  # Премия
 
 class Resume(Base):
     __tablename__ = "resume"

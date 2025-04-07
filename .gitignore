@@ -1,0 +1,29 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+#frontend
+# dependencies
+/datacareerinsight-frontend/node_modules
+/datacareerinsight-frontend/.pnp
+/datacareerinsight-frontend/.pnp.js
+
+# testing
+/datacareerinsight-frontend/coverage
+
+# production
+/datacareerinsight-frontend/build
+
+# misc
+/datacareerinsight-frontend/.DS_Store
+/datacareerinsight-frontend/.env.local
+/datacareerinsight-frontend/.env.development.local
+/datacareerinsight-frontend/.env.test.local
+/datacareerinsight-frontend/.env.production.local
+
+/datacareerinsight-frontend/npm-debug.log*
+/datacareerinsight-frontend/yarn-debug.log*
+/datacareerinsight-frontend/yarn-error.log*
+
+#parser
+
+/Parser/.env
+/Parser/authentication/hash_function.py
