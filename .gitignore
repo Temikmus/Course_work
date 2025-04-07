@@ -32,3 +32,5 @@
 ### Backend
 
 /Backend/.env
+
+.ipynb_checkpoints/
