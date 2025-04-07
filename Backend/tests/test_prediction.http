@@ -1,0 +1,17 @@
+
+###
+GET http://127.0.0.1:8000/prediction/model_structure/?base_model=vacancies
+Accept: application/json
+
+###
+
+POST http://127.0.0.1:8000/prediction/vacancies_salary/
+Content-Type: application/json
+
+{
+  "min_experience": 2,
+  "skills": {
+    "SQL": true
+  }
+}
+###
