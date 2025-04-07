@@ -23,7 +23,6 @@ def update_currency_table(conn):
         value = Decimal(str(currency_info['Value'])) / Decimal(str(currency_info['Nominal']))
         currency_data[currency_code] = value
 
-    # 🔄 Обновляем данные в таблице
     for currency_code, course in currency_data.items():
         cursor.execute("SELECT 1 FROM currency WHERE name_currency = %s", (currency_code,))
         if cursor.fetchone():
@@ -36,7 +35,7 @@ def update_currency_table(conn):
                 """, (currency_code, course))
 
     conn.commit()
-    print(f"Курсы валют успешно обновлены! Дата обновления: {datetime.now()}\nДанные взяты с ЦентроБанка")
+    print(f"Курсы валют успешно обновлены")
 
 
 

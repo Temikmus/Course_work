@@ -4,10 +4,6 @@ from urllib.parse import urlencode, urlparse, parse_qs
 from dotenv import load_dotenv
 import os
 
-
-
-
-
 def get_access_token():
     load_dotenv()
 

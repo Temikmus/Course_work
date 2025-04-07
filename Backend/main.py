@@ -1,16 +1,16 @@
 from fastapi import FastAPI
-from routers import  resumes_table, vacancies_table, charts
+from routers import resumes_table, vacancies_table, charts
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Разрешаем все домены (или конкретные, если нужно)
+# Разрешаем все домены
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Или ["http://localhost:3000"] для конкретного домена
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Или конкретные методы, например, ["GET", "POST"]
-    allow_headers=["*"],  # Или конкретные заголовки, если нужно
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(vacancies_table.router, prefix="/vacancies")

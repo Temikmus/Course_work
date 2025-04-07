@@ -20,7 +20,7 @@ def get_vacancies_with_dates(vacancy_name, date_list, access_token, conn):
         for page in range(100):
             params = {
                 "text": vacancy_name,
-                "area": 113,  # Код России
+                "area": 113,
                 "date_from": date_from,
                 "date_to": date_to,
                 "page": page,

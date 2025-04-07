@@ -1,18 +1,9 @@
-import collections
-
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
-from database import get_db
-from models import Vacancy, Resume
-from typing import Union
-import sql_functions
-from routers.vacancies_table import fetch_vacancies_data
-from routers.resumes_table import fetch_resumes_data
-import statistics
-import math
-import chart_functions
-
+from database.db_connection import get_db
+from support_functions.fetch_table import fetch_table_data
+from support_functions import chart_functions
+from database.models import Vacancy, Resume
 
 router = APIRouter()
 
@@ -27,11 +18,11 @@ def get_column_count_chart(
 ):
     # Выбираем модель
     if model == "vacancies":
-        result = fetch_vacancies_data(db=db,filters=filters, group_by=column, aggregates=f'{column}:count',
-                             sort_by=f'{column}:count:desc', limit=limit, not_null=column)
+        result = fetch_table_data(db=db,filters=filters, group_by=column, aggregates=f'{column}:count',
+                             sort_by=f'{column}:count:desc', limit=limit, not_null=column, base_model=Vacancy)
     elif model == "resume":
-        result = fetch_resumes_data(db=db,filters=filters, group_by=column, aggregates=f'{column}:count',
-                             sort_by=f'{column}:count:desc', limit=limit, not_null=column)
+        result = fetch_table_data(db=db,filters=filters, group_by=column, aggregates=f'{column}:count',
+                             sort_by=f'{column}:count:desc', limit=limit, not_null=column, base_model=Resume)
     else:
         raise HTTPException(status_code=400, detail="Неподдерживаемая модель")
 
@@ -66,12 +57,12 @@ def get_time_distribution_chart(
     # Выбираем модель
     if model == "vacancies":
         time_column = 'published_at'
-        result = fetch_vacancies_data(db=db,filters=filters, specific_fields=f'{column},published_at',
-                             sort_by=f'published_at:asc', limit=limit, not_null=column)['results']
+        result = fetch_table_data(db=db,filters=filters, specific_fields=f'{column},published_at',
+                             sort_by=f'published_at:asc', limit=limit, not_null=column, base_model=Vacancy)['results']
     elif model == "resume":
         time_column = 'updated_at'
-        result = fetch_resumes_data(db=db,filters=filters, specific_fields=f'{column},updated_at',
-                             sort_by=f'updated_at:asc', limit=limit, not_null=column)['results']
+        result = fetch_table_data(db=db,filters=filters, specific_fields=f'{column},updated_at',
+                             sort_by=f'updated_at:asc', limit=limit, not_null=column, base_model=Resume)['results']
     else:
         raise HTTPException(status_code=400, detail="Неподдерживаемая модель")
 
@@ -106,11 +97,11 @@ def get_metric_column_chart(
 ):
     # Выбираем модель
     if model == "vacancies":
-        result = fetch_vacancies_data(db=db,filters=filters, group_by=column, aggregates=f'{metric_column}:{aggregations},{column}:count',
-                                      sort_by=f'{column}:count:desc', limit=limit, not_null=f'{column},{metric_column}')['results']
+        result = fetch_table_data(db=db,filters=filters, group_by=column, aggregates=f'{metric_column}:{aggregations},{column}:count',
+                                      sort_by=f'{column}:count:desc', limit=limit, not_null=f'{column},{metric_column}', base_model=Vacancy)['results']
     elif model == "resume":
-        result = fetch_resumes_data(db=db,filters=filters, group_by=column, aggregates=f'{metric_column}:{aggregations},{column}:count',
-                                      sort_by=f'{column}:count:desc', limit=limit, not_null=f'{column},{metric_column}')['results']
+        result = fetch_table_data(db=db,filters=filters, group_by=column, aggregates=f'{metric_column}:{aggregations},{column}:count',
+                                      sort_by=f'{column}:count:desc', limit=limit, not_null=f'{column},{metric_column}', base_model=Resume)['results']
     else:
         raise HTTPException(status_code=400, detail="Неподдерживаемая модель")
     if result:
@@ -148,11 +139,11 @@ def get_metric_distribution_chart(
     limit = 100000000
     # Выбираем модель
     if model == "vacancies":
-        result = fetch_vacancies_data(db=db,filters=filters, group_by=f'{column}',aggregates=f'{column}:count',
-                             sort_by=f'{column}:asc', limit=limit, not_null=column)['results']
+        result = fetch_table_data(db=db,filters=filters, group_by=f'{column}',aggregates=f'{column}:count',
+                             sort_by=f'{column}:asc', limit=limit, not_null=column, base_model=Vacancy)['results']
     elif model == "resume":
-        result = fetch_resumes_data(db=db,filters=filters, group_by=f'{column}',aggregates=f'{column}:count',
-                             sort_by=f'{column}:asc', limit=limit, not_null=column)['results']
+        result = fetch_table_data(db=db,filters=filters, group_by=f'{column}',aggregates=f'{column}:count',
+                             sort_by=f'{column}:asc', limit=limit, not_null=column, base_model=Resume)['results']
     else:
         raise HTTPException(status_code=400, detail="Неподдерживаемая модель")
 

@@ -1,6 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-#frontend
+### Frontend
+
 # dependencies
 /datacareerinsight-frontend/node_modules
 /datacareerinsight-frontend/.pnp
@@ -23,7 +24,11 @@
 /datacareerinsight-frontend/yarn-debug.log*
 /datacareerinsight-frontend/yarn-error.log*
 
-#parser
+### Parser
 
 /Parser/.env
 /Parser/authentication/hash_function.py
+
+### Backend
+
+/Backend/.env
