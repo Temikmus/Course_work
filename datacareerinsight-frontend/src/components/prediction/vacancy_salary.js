@@ -22,7 +22,7 @@ const SalaryPredictor = () => {
     const [prediction, setPrediction] = useState(null);
     const [formData, setFormData] = useState({
         min_experience: 0,
-        type_format: null,
+        type_of_employment: null,
         work_format: null,
         skills: {},
         address: null
@@ -41,7 +41,7 @@ const SalaryPredictor = () => {
                 // Устанавливаем значения по умолчанию
                 const defaults = {
                     min_experience: response.data.structure.min_experience.default || 0,
-                    type_format: response.data.structure.type_format.default,
+                    type_of_employment: response.data.structure.type_of_employment.default,
                     work_format: response.data.structure.work_format.default,
                     address: response.data.structure.address.default,
                     skills: {}
@@ -93,7 +93,7 @@ const SalaryPredictor = () => {
             // Формируем данные в точном соответствии с ожиданиями сервера
             const requestData = {
                 min_experience: formData.min_experience,
-                ...(formData.type_format && { type_format: formData.type_format }),
+                ...(formData.type_of_employment && { type_of_employment: formData.type_of_employment }),
                 ...(formData.work_format && { work_format: formData.work_format }),
                 ...(Object.keys(formData.skills).length > 0 && { skills: formData.skills }),
                 ...(formData.address && { address: formData.address })
@@ -138,18 +138,18 @@ const SalaryPredictor = () => {
             />
 
             <FormControl fullWidth margin="normal">
-                <InputLabel>{modelStructure.type_format.description}</InputLabel>
+                <InputLabel>{modelStructure.type_of_employment.description}</InputLabel>
                 <Select
-                    value={formData.type_format || ''}
-                    onChange={handleSelectChange('type_format')}
-                    label={modelStructure.type_format.description}
+                    value={formData.type_of_employment || ''}
+                    onChange={handleSelectChange('type_of_employment')}
+                    label={modelStructure.type_of_employment.description}
                 >
                     {/* Добавляем значение по умолчанию первым в списке */}
-                    <MenuItem value={modelStructure.type_format.default}>
-                        {modelStructure.type_format.default}
+                    <MenuItem value={modelStructure.type_of_employment.default}>
+                        {modelStructure.type_of_employment.default}
                     </MenuItem>
-                    {modelStructure.type_format.options
-                        .filter(opt => opt !== modelStructure.type_format.default)
+                    {modelStructure.type_of_employment.options
+                        .filter(opt => opt !== modelStructure.type_of_employment.default)
                         .map(option => (
                             <MenuItem key={option} value={option}>
                                 {option}

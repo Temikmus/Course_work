@@ -6,7 +6,8 @@ import { ColumnCountChart } from '../components/charts/1st_graph/ColumnCountChar
 import { TimeDistributionChart } from '../components/charts/2nd_graph/TimeDistributionChart';
 import { MetricColumnChart } from '../components/charts/3rd_graph/MetricColumnChart';
 import { MetricDistributionChart } from '../components/charts/4th_graph/MetricDistributionChart';
-import SalaryPredictor from '../components/prediction/vacancy_salary';
+import VacanciesSalaryPredictor from '../components/prediction/vacancy_salary';
+import ResumeSalaryPredictor  from '../components/prediction/resume_salary';
 
 // import '../styles/VacanciesTable.css';
 // import '../styles/ResumeTable.css';
@@ -22,7 +23,8 @@ const Home = () => {
             <TimeDistributionChart model="resume" />
             <MetricColumnChart model="vacancies" />
             <MetricDistributionChart model="vacancies" />
-            <SalaryPredictor />
+            <VacanciesSalaryPredictor />
+            <ResumeSalaryPredictor />
         </div>
     );
 };

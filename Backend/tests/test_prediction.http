@@ -15,3 +15,17 @@ Content-Type: application/json
   }
 }
 ###
+
+POST http://127.0.0.1:8000/prediction/resume_salary/
+Content-Type: application/json
+
+{
+  "total_experience": 12,
+  "count_additional_courses": 3,
+  "language_eng": 2,
+  "is_driver": 1
+}
+###
+
+GET http://127.0.0.1:8000/prediction/model_structure/?base_model=resume
+Accept: application/json

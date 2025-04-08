@@ -72,7 +72,7 @@ def get_structure_for_vacancies(params):
             "default": 0,
             "description": "Опыт работы в годах"
         },
-        "type_format": {
+        "type_of_employment": {
             "options": [],
             "single": True,
             "default": "Полная занятость",
@@ -101,7 +101,7 @@ def get_structure_for_vacancies(params):
     for param in params:
         if param.startswith("type_of_employment_"):
             value = param.replace("type_of_employment_", "")
-            structure["type_format"]["options"].append(value)
+            structure["type_of_employment"]["options"].append(value)
         elif param.startswith("work_format_"):
             value = param.replace("work_format_", "")
             structure["work_format"]["options"].append(value)

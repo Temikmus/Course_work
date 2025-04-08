@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Body
 from typing import Dict, Any
 from sqlalchemy.orm import Session
 import json
-from regression import regression_functions, vacancies_regression
+from regression import regression_functions, vacancies_regression, resume_regression
 from database.db_connection import get_db
 from fastapi import APIRouter, HTTPException, Depends, Body, Query
 from typing import Dict, Any
@@ -22,6 +22,8 @@ async def get_structure(
 
         if base_model=="vacancies":
             return vacancies_regression.get_structure_for_vacancies(params)
+        else:
+            return resume_regression.get_structure_for_resume(params)
 
     except Exception as e:
         raise HTTPException(

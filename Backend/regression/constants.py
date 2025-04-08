@@ -34,7 +34,55 @@ default_vacancies_data = {
 }
 
 default_resume_data = {
-
+    'const': 1,
+    'total_experience': 0,
+    'count_additional_courses': 0,
+    'language_eng': 0,
+    'is_driver': 0,
+    'gender_female': 0,
+    'area_other': 0,
+    'area_Казань': 0,
+    'area_Краснодар': 0,
+    'area_Нижний Новгород': 0,
+    'area_Санкт-Петербург': 0,
+    'skill_Работа с большим объемом информации': 0,
+    'skill_Аналитическое мышление': 0,
+    'skill_SQL': 0,
+    'skill_Python': 0,
+    'skill_Atlassian Jira': 0,
+    'skill_Постановка задач разработчикам': 0,
+    'skill_Системный анализ': 0,
+    'skill_Power BI': 0,
+    'skill_Atlassian Confluence': 0,
+    'skill_Финансовый анализ': 0,
+    'skill_MS SQL': 0,
+    'skill_Автоматизация процессов': 0,
+    'skill_Визуализация данных': 0,
+    'skill_Оптимизация бизнес-процессов': 0,
+    'skill_Прогнозирование': 0,
+    'schedules_Удаленная работа': 0,
+    'schedules_Сменный график': 0,
+    'experience_Сбер': 0,
+    'experience_Индивидуальное предпринимательство / частная практика / фриланс': 0,
+    'experience_Яндекс': 0,
+    'experience_Билайн': 0,
+    'experience_Тинькофф Банк': 0,
+    'experience_Промсвязьбанк': 0,
+    'experience_Газпромбанк': 0,
+    'experience_Raiffeisenbank': 0,
+    'experience_VK': 0,
+    'experience_Иннотех': 0,
+    'experience_Банк Хоум Кредит': 0,
+    'experience_Wildberries': 0,
+    'employments_Полная занятость': 0,
+    'employments_Частичная занятость': 0,
+    'employments_Проектная работа': 0,
+    'employments_Стажировка': 0,
+    'university_Российский экономический университет им. Г.В. Плеханова': 0,
+    'university_Российская академия народного хозяйства и государственной службы при Президенте РФ': 0,
+    'university_Московский государственный технический университет им. Н.Э. Баумана': 0,
+    'university_Московский физико-технический институт (Государственный университет)': 0,
+    'university_Государственный университет управления': 0
 }
 
 selected_vacancies_skills = [
@@ -113,8 +161,9 @@ vacancies_drop_columns = [
     'work_format_Удаленная работа', 'address_Москва'
 ]
 
-resume_drop_columns = []
+resume_drop_columns = ['russian_salary', 'gender_male',
+                     'area_Москва']
 
 vacancies_y_column = "salary"
 
-resume_y_column = ""
+resume_y_column = "russian_salary"
