@@ -1,12 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends, Body
+from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any
-from sqlalchemy.orm import Session
 import json
-from regression import regression_functions, vacancies_regression
-from database.db_connection import get_db
-from fastapi import APIRouter, HTTPException, Depends, Body, Query
-from typing import Dict, Any
-from sqlalchemy.orm import Session
+from regression import regression_functions
+from regression.model_interpretation import get_model_results
 
 router = APIRouter()
 
@@ -20,9 +16,10 @@ async def predict_vacancy_salary(
         address: str = Body(None),
 ):
     try:
-        # Преобразуем параметры в формат модели
+        # 1. Подготовка параметров для предсказания
         prediction_params = {
-            "min_experience": min_experience
+            "min_experience": min_experience,
+            "const": 1  # Добавляем константу для модели
         }
 
         # Обрабатываем категориальные признаки
@@ -40,16 +37,31 @@ async def predict_vacancy_salary(
             if enabled:
                 prediction_params[f"skill_{skill}"] = 1
 
-        # Получаем модель и делаем предсказание
-        model = regression_functions.get_model("vacancies")
+        # 2. Получаем модель
+        model_data = regression_functions.get_model("vacancies")
+        model, X, y = model_data["model"], model_data["X"], model_data["y"]
+
+
+        # Получаем информацию о модели
+        model_info = get_model_results(
+            model=model,
+            X=X,
+            y=y,
+            model_name="Зарплатный калькулятор"
+        )
+
+        # Делаем предсказание
         salary = regression_functions.predict_salary(
             model=model,
             base_model="vacancies",
             **prediction_params
         )
 
+
+
         return {
-            "predicted_salary": round(salary, 2),
+            "predicted_salary": round(float(salary), 2),  # Явное преобразование в float
+            "model_info": model_info,
             "used_parameters": prediction_params
         }
 
@@ -59,6 +71,7 @@ async def predict_vacancy_salary(
             detail=f"Ошибка предсказания: {str(e)}"
         )
 
+
 @router.post("/resume_salary/")
 async def predict_resume_salary(
         total_experience: float = Body(..., embed=True),
@@ -66,7 +79,7 @@ async def predict_resume_salary(
         language_eng: float = Body(..., embed=True),
         is_driver: float = Body(..., embed=True),
         gender: str = Body(None),
-        skill: Dict[str, bool] = Body({}),
+        skills: Dict[str, bool] = Body({}),
         schedules: Dict[str, bool] = Body({}),
         experience: Dict[str, bool] = Body({}),
         employments: Dict[str, bool] = Body({}),
@@ -74,12 +87,13 @@ async def predict_resume_salary(
         area: str = Body(None),
 ):
     try:
-        # Преобразуем параметры в формат модели
+        # 1. Подготовка параметров
         prediction_params = {
             "total_experience": total_experience,
             "count_additional_courses": count_additional_courses,
             "language_eng": language_eng,
-            "is_driver": is_driver
+            "is_driver": is_driver,
+            "const": 1
         }
 
         # Обрабатываем категориальные признаки
@@ -90,9 +104,9 @@ async def predict_resume_salary(
             prediction_params[f"area_{area}"] = 1
 
         # Обрабатываем списки
-        for skil, enabled in skill.items():
+        for skill, enabled in skills.items():
             if enabled:
-                prediction_params[f"skill_{skil}"] = 1
+                prediction_params[f"skill_{skill}"] = 1
 
         for schedule, enabled in schedules.items():
             if enabled:
@@ -110,18 +124,31 @@ async def predict_resume_salary(
             if enabled:
                 prediction_params[f"employments_{emp}"] = 1
 
-        # Получаем модель и делаем предсказание
-        model = regression_functions.get_model("resume")
+        # 2. Получаем модель
+        model_data = regression_functions.get_model("resume")
+        model, X, y = model_data["model"], model_data["X"], model_data["y"]
+
+        # Делаем предсказание
         salary = regression_functions.predict_salary(
             model=model,
             base_model="resume",
             **prediction_params
         )
 
+        # Получаем информацию о модели
+        model_info = get_model_results(
+            model=model,
+            X=X,
+            y=y,
+            model_name="Зарплатный калькулятор по резюме"
+        )
+
         return {
-            "predicted_salary": round(salary, 2),
+            "predicted_salary": round(float(salary), 2),  # Явное преобразование в float
+            "model_info": model_info,
             "used_parameters": prediction_params
         }
+
 
     except Exception as e:
         raise HTTPException(

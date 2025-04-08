@@ -16,8 +16,10 @@ import {
     CircularProgress,
     Slider,
     FormControlLabel,
-    Switch
+    Switch,
+    Grid
 } from '@mui/material';
+import SalaryPredictionResult from './SalaryPredictionResult';
 
 const ResumeSalaryPredictor = () => {
     const [modelStructure, setModelStructure] = useState(null);
@@ -42,13 +44,11 @@ const ResumeSalaryPredictor = () => {
     const [selectedEmployments, setSelectedEmployments] = useState([]);
     const [selectedUniversities, setSelectedUniversities] = useState([]);
 
-    // Маппинг для отображения пола
     const genderDisplayMap = {
         male: 'Мужской',
         female: 'Женский'
     };
 
-    // Маппинг для отображения уровня английского
     const englishLevelMap = {
         0: '0',
         1: 'A1',
@@ -68,22 +68,7 @@ const ResumeSalaryPredictor = () => {
                     'http://127.0.0.1:8000/prediction/model_structure/?base_model=resume'
                 );
                 setModelStructure(response.data.structure);
-
-                // Устанавливаем значения по умолчанию
-                const defaults = {
-                    total_experience: response.data.structure.total_experience.default || 0,
-                    count_additional_courses: response.data.structure.count_additional_courses.default || 0,
-                    language_eng: response.data.structure.language_eng.default || 0,
-                    is_driver: response.data.structure.is_driver.default || 0,
-                    gender: response.data.structure.gender.default || null,
-                    area: response.data.structure.area.default || null,
-                    skill: {},
-                    schedules: {},
-                    experience: {},
-                    employments: {},
-                    university: {}
-                };
-                setFormData(defaults);
+                resetForm(response.data.structure);
             } catch (error) {
                 console.error('Error fetching model structure:', error);
             } finally {
@@ -93,6 +78,29 @@ const ResumeSalaryPredictor = () => {
 
         fetchModelStructure();
     }, []);
+
+    const resetForm = (structure) => {
+        const defaults = {
+            total_experience: structure?.total_experience?.default || 0,
+            count_additional_courses: structure?.count_additional_courses?.default || 0,
+            language_eng: structure?.language_eng?.default || 0,
+            is_driver: structure?.is_driver?.default || 0,
+            gender: structure?.gender?.default || null,
+            area: structure?.area?.default || null,
+            skill: {},
+            schedules: {},
+            experience: {},
+            employments: {},
+            university: {}
+        };
+        setFormData(defaults);
+        setSelectedSkills([]);
+        setSelectedSchedules([]);
+        setSelectedExperience([]);
+        setSelectedEmployments([]);
+        setSelectedUniversities([]);
+        setPrediction(null);
+    };
 
     const handleNumberChange = (field) => (e) => {
         setFormData({
@@ -140,8 +148,8 @@ const ResumeSalaryPredictor = () => {
     const handlePredict = async () => {
         try {
             setLoading(true);
+            setPrediction(null);
 
-            // Формируем данные в точном соответствии с ожиданиями сервера
             const requestData = {
                 total_experience: formData.total_experience,
                 count_additional_courses: formData.count_additional_courses,
@@ -161,12 +169,18 @@ const ResumeSalaryPredictor = () => {
                 requestData
             );
 
-            setPrediction(response.data.predicted_salary);
+            setPrediction(response.data);
         } catch (error) {
             console.error('Prediction error:', error);
             alert(`Ошибка предсказания: ${error.response?.data?.detail || error.message}`);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleReset = () => {
+        if (modelStructure) {
+            resetForm(modelStructure);
         }
     };
 
@@ -184,9 +198,7 @@ const ResumeSalaryPredictor = () => {
                 Калькулятор зарплаты для резюме
             </Typography>
 
-            {/* Основные числовые параметры */}
             <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={2}>
-                {/* Общий опыт работы */}
                 <TextField
                     fullWidth
                     label={modelStructure.total_experience.description}
@@ -197,7 +209,6 @@ const ResumeSalaryPredictor = () => {
                     InputProps={{ inputProps: { min: 0 } }}
                 />
 
-                {/* Количество курсов */}
                 <TextField
                     fullWidth
                     label={modelStructure.count_additional_courses.description}
@@ -208,7 +219,6 @@ const ResumeSalaryPredictor = () => {
                     InputProps={{ inputProps: { min: 0 } }}
                 />
 
-                {/* Уровень английского */}
                 <Box mt={2}>
                     <Typography gutterBottom>
                         {modelStructure.language_eng.description}
@@ -232,7 +242,6 @@ const ResumeSalaryPredictor = () => {
                     />
                 </Box>
 
-                {/* Водительские права */}
                 <FormControlLabel
                     control={
                         <Switch
@@ -246,9 +255,7 @@ const ResumeSalaryPredictor = () => {
                 />
             </Box>
 
-            {/* Категориальные параметры */}
             <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={2} mt={2}>
-                {/* Пол */}
                 <FormControl fullWidth margin="normal">
                     <InputLabel>{modelStructure.gender.description}</InputLabel>
                     <Select
@@ -269,7 +276,6 @@ const ResumeSalaryPredictor = () => {
                     </Select>
                 </FormControl>
 
-                {/* Город */}
                 <FormControl fullWidth margin="normal">
                     <InputLabel>{modelStructure.area.description}</InputLabel>
                     <Select
@@ -291,15 +297,13 @@ const ResumeSalaryPredictor = () => {
                 </FormControl>
             </Box>
 
-            {/* Мультиселекторы */}
             <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={2} mt={2}>
-                {/* Навыки */}
                 <FormControl fullWidth margin="normal">
                     <InputLabel>{modelStructure.skill.description}</InputLabel>
                     <Select
                         multiple
                         value={selectedSkills}
-                        onChange={handleMultiSelectChange('skill', setSelectedSkills)}
+                        onChange={(e) => handleMultiSelectChange('skill', setSelectedSkills)(e)}
                         input={<OutlinedInput label={modelStructure.skill.description} />}
                         renderValue={(selected) => selected.join(', ')}
                     >
@@ -312,13 +316,12 @@ const ResumeSalaryPredictor = () => {
                     </Select>
                 </FormControl>
 
-                {/* График работы */}
                 <FormControl fullWidth margin="normal">
                     <InputLabel>{modelStructure.schedules.description}</InputLabel>
                     <Select
                         multiple
                         value={selectedSchedules}
-                        onChange={handleMultiSelectChange('schedules', setSelectedSchedules)}
+                        onChange={(e) => handleMultiSelectChange('schedules', setSelectedSchedules)(e)}
                         input={<OutlinedInput label={modelStructure.schedules.description} />}
                         renderValue={(selected) => selected.join(', ')}
                     >
@@ -331,13 +334,12 @@ const ResumeSalaryPredictor = () => {
                     </Select>
                 </FormControl>
 
-                {/* Опыт работы */}
                 <FormControl fullWidth margin="normal">
                     <InputLabel>{modelStructure.experience.description}</InputLabel>
                     <Select
                         multiple
                         value={selectedExperience}
-                        onChange={handleMultiSelectChange('experience', setSelectedExperience)}
+                        onChange={(e) => handleMultiSelectChange('experience', setSelectedExperience)(e)}
                         input={<OutlinedInput label={modelStructure.experience.description} />}
                         renderValue={(selected) => selected.join(', ')}
                     >
@@ -350,13 +352,12 @@ const ResumeSalaryPredictor = () => {
                     </Select>
                 </FormControl>
 
-                {/* Тип занятости */}
                 <FormControl fullWidth margin="normal">
                     <InputLabel>{modelStructure.employments.description}</InputLabel>
                     <Select
                         multiple
                         value={selectedEmployments}
-                        onChange={handleMultiSelectChange('employments', setSelectedEmployments)}
+                        onChange={(e) => handleMultiSelectChange('employments', setSelectedEmployments)(e)}
                         input={<OutlinedInput label={modelStructure.employments.description} />}
                         renderValue={(selected) => selected.join(', ')}
                     >
@@ -369,13 +370,12 @@ const ResumeSalaryPredictor = () => {
                     </Select>
                 </FormControl>
 
-                {/* Университеты */}
                 <FormControl fullWidth margin="normal">
                     <InputLabel>{modelStructure.university.description}</InputLabel>
                     <Select
                         multiple
                         value={selectedUniversities}
-                        onChange={handleMultiSelectChange('university', setSelectedUniversities)}
+                        onChange={(e) => handleMultiSelectChange('university', setSelectedUniversities)(e)}
                         input={<OutlinedInput label={modelStructure.university.description} />}
                         renderValue={(selected) => selected.join(', ')}
                     >
@@ -389,25 +389,34 @@ const ResumeSalaryPredictor = () => {
                 </FormControl>
             </Box>
 
-            <Box mt={3} display="flex" justifyContent="center">
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handlePredict}
-                    disabled={loading}
-                    size="large"
-                >
-                    {loading ? <CircularProgress size={24} /> : 'Рассчитать зарплату'}
-                </Button>
-            </Box>
+            <Grid container spacing={2} mt={3}>
+                <Grid item xs={6}>
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        color="secondary"
+                        onClick={handleReset}
+                        disabled={loading}
+                        size="large"
+                    >
+                        Очистить
+                    </Button>
+                </Grid>
+                <Grid item xs={6}>
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        onClick={handlePredict}
+                        disabled={loading}
+                        size="large"
+                    >
+                        {loading ? <CircularProgress size={24} /> : 'Рассчитать зарплату'}
+                    </Button>
+                </Grid>
+            </Grid>
 
-            {prediction !== null && (
-                <Box mt={3} textAlign="center">
-                    <Typography variant="h6">
-                        Предсказанная зарплата: <strong>{prediction.toLocaleString()} ₽</strong>
-                    </Typography>
-                </Box>
-            )}
+            {prediction && <SalaryPredictionResult data={prediction} />}
         </Paper>
     );
 };

@@ -13,10 +13,12 @@ import {
     ListItemText,
     OutlinedInput,
     Paper,
-    CircularProgress
+    CircularProgress,
+    Grid
 } from '@mui/material';
+import SalaryPredictionResult from './SalaryPredictionResult';
 
-const SalaryPredictor = () => {
+const VacancySalaryPredictor = () => {
     const [modelStructure, setModelStructure] = useState(null);
     const [loading, setLoading] = useState(false);
     const [prediction, setPrediction] = useState(null);
@@ -37,16 +39,7 @@ const SalaryPredictor = () => {
                     'http://127.0.0.1:8000/prediction/model_structure/?base_model=vacancies'
                 );
                 setModelStructure(response.data.structure);
-
-                // Устанавливаем значения по умолчанию
-                const defaults = {
-                    min_experience: response.data.structure.min_experience.default || 0,
-                    type_of_employment: response.data.structure.type_of_employment.default,
-                    work_format: response.data.structure.work_format.default,
-                    address: response.data.structure.address.default,
-                    skills: {}
-                };
-                setFormData(defaults);
+                initializeFormData(response.data.structure);
             } catch (error) {
                 console.error('Error fetching model structure:', error);
             } finally {
@@ -56,6 +49,17 @@ const SalaryPredictor = () => {
 
         fetchModelStructure();
     }, []);
+
+    const initializeFormData = (structure) => {
+        const defaults = {
+            min_experience: structure.min_experience.default || 0,
+            type_of_employment: structure.type_of_employment.default,
+            work_format: structure.work_format.default,
+            address: structure.address.default,
+            skills: {}
+        };
+        setFormData(defaults);
+    };
 
     const handleNumberChange = (field) => (e) => {
         setFormData({
@@ -89,8 +93,8 @@ const SalaryPredictor = () => {
     const handlePredict = async () => {
         try {
             setLoading(true);
+            setPrediction(null);
 
-            // Формируем данные в точном соответствии с ожиданиями сервера
             const requestData = {
                 min_experience: formData.min_experience,
                 ...(formData.type_of_employment && { type_of_employment: formData.type_of_employment }),
@@ -104,12 +108,20 @@ const SalaryPredictor = () => {
                 requestData
             );
 
-            setPrediction(response.data.predicted_salary);
+            setPrediction(response.data);
         } catch (error) {
             console.error('Prediction error:', error);
             alert(`Ошибка предсказания: ${error.response?.data?.detail || error.message}`);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleReset = () => {
+        if (modelStructure) {
+            initializeFormData(modelStructure);
+            setSelectedSkills([]);
+            setPrediction(null);
         }
     };
 
@@ -122,9 +134,9 @@ const SalaryPredictor = () => {
     }
 
     return (
-        <Paper elevation={3} sx={{ p: 3, maxWidth: 600, margin: 'auto', mt: 4 }}>
+        <Paper elevation={3} sx={{ p: 3, maxWidth: 800, margin: 'auto', mt: 4 }}>
             <Typography variant="h5" gutterBottom align="center">
-                Калькулятор зарплаты
+                Калькулятор зарплаты для вакансий
             </Typography>
 
             <TextField
@@ -144,7 +156,6 @@ const SalaryPredictor = () => {
                     onChange={handleSelectChange('type_of_employment')}
                     label={modelStructure.type_of_employment.description}
                 >
-                    {/* Добавляем значение по умолчанию первым в списке */}
                     <MenuItem value={modelStructure.type_of_employment.default}>
                         {modelStructure.type_of_employment.default}
                     </MenuItem>
@@ -216,27 +227,36 @@ const SalaryPredictor = () => {
                 </Select>
             </FormControl>
 
-            <Box mt={3} display="flex" justifyContent="center">
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handlePredict}
-                    disabled={loading}
-                    size="large"
-                >
-                    {loading ? <CircularProgress size={24} /> : 'Рассчитать зарплату'}
-                </Button>
-            </Box>
+            <Grid container spacing={2} mt={3}>
+                <Grid item xs={6}>
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        color="secondary"
+                        onClick={handleReset}
+                        disabled={loading}
+                        size="large"
+                    >
+                        Очистить
+                    </Button>
+                </Grid>
+                <Grid item xs={6}>
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        onClick={handlePredict}
+                        disabled={loading}
+                        size="large"
+                    >
+                        {loading ? <CircularProgress size={24} /> : 'Рассчитать зарплату'}
+                    </Button>
+                </Grid>
+            </Grid>
 
-            {prediction !== null && (
-                <Box mt={3} textAlign="center">
-                    <Typography variant="h6">
-                        Предсказанная зарплата: <strong>{prediction.toLocaleString()} ₽</strong>
-                    </Typography>
-                </Box>
-            )}
+            {prediction && <SalaryPredictionResult data={prediction} />}
         </Paper>
     );
 };
 
-export default SalaryPredictor;
+export default VacancySalaryPredictor;

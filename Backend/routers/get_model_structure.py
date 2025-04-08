@@ -17,7 +17,7 @@ async def get_structure(
 ):
     try:
         # Получаем модель и её параметры
-        model = regression_functions.get_model(base_model)
+        model = regression_functions.get_model(base_model)["model"]
         params = model.model.exog_names  # Список всех предикторов
 
         if base_model=="vacancies":

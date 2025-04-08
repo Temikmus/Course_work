@@ -6,6 +6,8 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 from regression import constants, resume_regression, vacancies_regression
 
 
+
+
 def predict_salary(model, base_model , **kwargs):
     if base_model=="vacancies":
         default_data = constants.default_vacancies_data.copy()
@@ -73,5 +75,4 @@ def get_model(base_model):
 
     model = sm.OLS(y, X).fit()
     print(f"Финальная модель обучена с {X.shape[1]} признаками")
-    return model
-
+    return {"model": model,"X": X, "y": y}
