@@ -11,8 +11,6 @@ import SalaryPredictorTabs from '../components/prediction/SalaryPredictorTabs';
 import {CssBaseline, Container, Typography} from '@mui/material';
 
 
-// import '../styles/VacanciesTable.css';
-// import '../styles/ResumeTable.css';
 
 const Home = () => {
     return (

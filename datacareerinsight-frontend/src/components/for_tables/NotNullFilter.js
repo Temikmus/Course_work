@@ -1,88 +1,183 @@
 import React, { useState, useEffect } from "react";
+import {
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Box,
+    Button,
+    Checkbox,
+    Chip,
+    Grid,
+    List,
+    ListItem,
+    ListItemText,
+    Menu,
+    Paper,
+    Stack,
+    Typography
+} from '@mui/material';
+import {
+    Close as CloseIcon,
+    ExpandMore as ExpandMoreIcon,
+    FilterList as FilterListIcon,
+    KeyboardArrowDown as KeyboardArrowDownIcon
+} from '@mui/icons-material';
 
+const NotNullFilter = ({
+                           notNull,
+                           onApplyNotNullFilter,
+                           resetTrigger,
+                           fieldsConfig = { fields: [] },
+                       }) => {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [selectedColumns, setSelectedColumns] = useState([]);
+    const [expanded, setExpanded] = useState(false);
+    const { fields = [] } = fieldsConfig;
 
-const NotNullFilter = ({ notNull, onApplyNotNullFilter, resetTrigger, fieldsConfig = {
-    fields: []
-} }) => {
-    const [showColumnMenu, setShowColumnMenu] = useState(false); // Состояние для отображения меню
-    const [selectedColumns, setSelectedColumns] = useState([]); // Выбранные столбцы
-
-    const {
-        fields
-    } = fieldsConfig;
-
-    // Синхронизация внутреннего состояния с пропсом notNull
     useEffect(() => {
         if (notNull) {
-            setSelectedColumns(notNull.split(",")); // Разделяем строку на массив столбцов
+            setSelectedColumns(notNull.split(","));
         } else {
-            setSelectedColumns([]); // Если notNull пустой, сбрасываем выбранные столбцы
+            setSelectedColumns([]);
         }
-    }, [notNull]);
+    }, [notNull, resetTrigger]);
 
-    // Сброс состояния showColumnMenu при изменении resetTrigger
-    useEffect(() => {
-        setShowColumnMenu(false); // Скрываем меню
-    }, [resetTrigger]);
-
-    // Обработчик изменения выбранных столбцов
-    const handleColumnToggle = (column) => {
-        let updatedColumns;
-        if (selectedColumns.includes(column)) {
-            updatedColumns = selectedColumns.filter((col) => col !== column); // Удаляем столбец
-        } else {
-            updatedColumns = [...selectedColumns, column]; // Добавляем столбец
-        }
-        setSelectedColumns(updatedColumns); // Обновляем состояние
-        onApplyNotNullFilter(updatedColumns.join(",")); // Применяем изменения к запросу
+    const handleMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
     };
 
-    // Обработчик очистки фильтров
-    const handleClearFilters = () => {
-        setSelectedColumns([]); // Сбрасываем выбранные столбцы
-        onApplyNotNullFilter(""); // Очищаем фильтр в родительском компоненте
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleColumnToggle = (column) => {
+        const newSelected = selectedColumns.includes(column)
+            ? selectedColumns.filter(col => col !== column)
+            : [...selectedColumns, column];
+
+        setSelectedColumns(newSelected);
+        onApplyNotNullFilter(newSelected.join(","));
+    };
+
+    const handleClear = () => {
+        setSelectedColumns([]);
+        onApplyNotNullFilter("");
+    };
+
+    // Функция для получения названия поля по его значению
+    const getFieldLabel = (fieldValue) => {
+        const fieldObj = fields.find(f => f.value === fieldValue);
+        return fieldObj ? fieldObj.label : fieldValue;
     };
 
     return (
-        <div className="not-null-filter">
-            <h3>Фильтр по непустым значениям (NOT NULL)</h3>
+        <Paper elevation={2} sx={{ mb: 2 }}>
+            <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="subtitle1">Фильтр по непустым значениям</Typography>
+                    {selectedColumns.length > 0 && (
+                        <Chip
+                            label={selectedColumns.length}
+                            size="small"
+                            color="primary"
+                            sx={{ ml: 1 }}
+                        />
+                    )}
+                </AccordionSummary>
 
-            {/* Кнопка для отображения меню выбора столбцов */}
-            <button onClick={() => setShowColumnMenu(!showColumnMenu)}>
-                {showColumnMenu ? "Скрыть столбцы" : "Выбрать столбцы"}
-            </button>
+                <AccordionDetails>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                В выбранных столбцах не будет пропусков
+                            </Typography>
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                startIcon={<FilterListIcon />}
+                                endIcon={<KeyboardArrowDownIcon />}
+                                onClick={handleMenuOpen}
+                                sx={{ height: '40px' }}
+                            >
+                                {selectedColumns.length > 0
+                                    ? 'Изменить выбор столбцов'
+                                    : 'Выбрать столбцы'}
+                            </Button>
+                        </Grid>
+                    </Grid>
 
-            {/* Кнопка очистки фильтров */}
-            <button onClick={handleClearFilters} className="clear-btn">
-                Очистить фильтры
-            </button>
+                    {selectedColumns.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Выбранные столбцы:
+                            </Typography>
+                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                                {selectedColumns.map(column => (
+                                    <Chip
+                                        key={column}
+                                        label={getFieldLabel(column)}
+                                        onDelete={() => handleColumnToggle(column)}
+                                        deleteIcon={<CloseIcon />}
+                                        variant="outlined"
+                                        color="primary"
+                                        sx={{ mb: 1 }}
+                                    />
+                                ))}
+                            </Stack>
+                        </Box>
+                    )}
 
-            {/* Выпадающее меню с чекбоксами */}
-            {showColumnMenu && (
-                <div className="column-menu">
-                    {fields.map((column) => (
-                        <label key={column} className="column-menu-item">
-                            <input
-                                type="checkbox"
-                                checked={selectedColumns.includes(column)}
-                                onChange={() => handleColumnToggle(column)}
-                            />
-                            {column.replace(/_/g, ' ').toUpperCase()}
-                        </label>
-                    ))}
-                </div>
-            )}
+                    {selectedColumns.length > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={handleClear}
+                            >
+                                Очистить фильтр
+                            </Button>
+                        </Box>
+                    )}
 
-            {/* Отображение выбранных столбцов */}
-            <div className="selected-columns">
-                <strong>Выбранные столбцы:</strong>
-                {selectedColumns.length > 0 ? (
-                    <span>{selectedColumns.join(", ")}</span>
-                ) : (
-                    <span>Нет выбранных столбцов</span>
-                )}
-            </div>
-        </div>
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={handleMenuClose}
+                        PaperProps={{
+                            style: {
+                                maxHeight: 400,
+                                width: 300,
+                            },
+                        }}
+                    >
+                        <Box sx={{ p: 2 }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                                Выберите столбцы:
+                            </Typography>
+                            <List dense>
+                                {fields.map(field => (
+                                    <ListItem
+                                        key={field.value}
+                                        disablePadding
+                                        secondaryAction={
+                                            <Checkbox
+                                                edge="end"
+                                                checked={selectedColumns.includes(field.value)}
+                                                onChange={() => handleColumnToggle(field.value)}
+                                            />
+                                        }
+                                    >
+                                        <ListItemText
+                                            primary={field.label}
+                                        />
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Box>
+                    </Menu>
+                </AccordionDetails>
+            </Accordion>
+        </Paper>
     );
 };
 

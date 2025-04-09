@@ -1,83 +1,249 @@
 import React, { useState } from "react";
+import {
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Box,
+    Button,
+    Chip,
+    Divider,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Paper,
+    Select,
+    Stack,
+    TextField,
+    Typography
+} from '@mui/material';
+import {
+    Add as AddIcon,
+    Close as CloseIcon,
+    ExpandMore as ExpandMoreIcon
+} from '@mui/icons-material';
 
-
-const HavingFilters = ({ aggregates, onAddHavingFilter, onRemoveHavingFilter, havingFilters, fieldsConfig = {
-    operators: []
-} }) => {
-    const [column, setColumn] = useState(""); // Выбранный столбец
-    const [operator, setOperator] = useState(">"); // Оператор сравнения
-    const [value, setValue] = useState(""); // Значение для сравнения
+const HavingFilters = ({
+                           aggregates,
+                           onAddHavingFilter,
+                           onRemoveHavingFilter,
+                           havingFilters,
+                           fieldsConfig = {
+                               operators: [],
+                               fields: [],
+                               numericAggregations: [],
+                               nonNumericAggregations: [],
+                               dateAggregations: []
+                           },
+                           resetTrigger
+                       }) => {
+    const [column, setColumn] = useState("");
+    const [operator, setOperator] = useState(">");
+    const [value, setValue] = useState("");
+    const [expanded, setExpanded] = useState(false);
 
     const {
-        operators
+        operators = [],
+        fields = [],
+        numericAggregations = [],
+        nonNumericAggregations = [],
+        dateAggregations = []
     } = fieldsConfig;
 
-    // Обработчик добавления фильтра
     const handleAddHavingFilter = () => {
         if (column && operator && value) {
-            // Находим полное название агрегированного поля (например, "salary_from:avg")
             const fullAggregate = aggregates.find((agg) => agg.startsWith(column));
             if (fullAggregate) {
                 const havingFilter = `${fullAggregate}${operator}${value}`;
-                onAddHavingFilter(havingFilter); // Передаем фильтр в родительский компонент
-                setColumn(""); // Сбрасываем выбор столбца
-                setValue(""); // Сбрасываем значение
+                onAddHavingFilter(havingFilter);
+                setColumn("");
+                setValue("");
             }
         }
     };
 
-    // Убираем оператор "Содержит" (==) для HAVING
+    const handleClearAll = () => {
+        havingFilters.forEach((_, index) => onRemoveHavingFilter(index));
+    };
+
     const filteredOperators = operators.filter(op => op.value !== "==");
 
+    // Функция для получения перевода названия поля
+    const getFieldLabel = (fieldValue) => {
+        const fieldObj = fields.find(f => f.value === fieldValue);
+        return fieldObj ? fieldObj.label : fieldValue;
+    };
+
+    // Функция для получения перевода агрегации
+    const getAggregationLabel = (aggValue) => {
+        const allAggregations = [...numericAggregations, ...nonNumericAggregations, ...dateAggregations];
+        const aggObj = allAggregations.find(a => a.value === aggValue);
+        return aggObj ? aggObj.label : aggValue;
+    };
+
+    // Форматирование отображения агрегированного поля (например, "title:avg" -> "Название вакансии (Среднее)")
+    const formatAggregate = (agg) => {
+        const [field, aggregation] = agg.split(":");
+        const fieldLabel = getFieldLabel(field);
+        const aggLabel = getAggregationLabel(aggregation);
+        return `${fieldLabel} (${aggLabel})`;
+    };
+
+    // Форматирование отображения фильтра (например, "title:avg>1000" -> "Название вакансии (Среднее) > 1000")
+    const formatFilterDisplay = (filter) => {
+        const parts = filter.split(/([<>!=]+)/);
+        const [field, aggregation] = parts[0].split(":");
+        const operator = parts[1];
+        const value = parts[2];
+
+        const fieldLabel = getFieldLabel(field);
+        const aggLabel = getAggregationLabel(aggregation);
+
+        return `${fieldLabel} (${aggLabel}) ${operator} ${value}`;
+    };
+
     return (
-        <div className="having-filters">
-            <h3>Фильтры по агрегированным полям (HAVING)</h3>
+        <Paper elevation={2} sx={{ mb: 2 }}>
+            <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="subtitle1">Фильтры по агрегированным полям (HAVING)</Typography>
+                    {havingFilters.length > 0 && (
+                        <Chip
+                            label={havingFilters.length}
+                            size="small"
+                            color="primary"
+                            sx={{ ml: 1 }}
+                        />
+                    )}
+                </AccordionSummary>
 
-            {/* Текущие фильтры */}
-            <div className="active-having-filters">
-                {havingFilters.map((filter, index) => (
-                    <div key={index} className="having-filter-item">
-                        <span>{filter}</span>
-                        <button onClick={() => onRemoveHavingFilter(index)}>×</button>
-                    </div>
-                ))}
-            </div>
+                <AccordionDetails>
+                    {havingFilters.length > 0 && (
+                        <Box sx={{ mb: 2 }}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Активные фильтры:
+                            </Typography>
+                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                                {havingFilters.map((filter, index) => (
+                                    <Chip
+                                        key={index}
+                                        label={formatFilterDisplay(filter)}
+                                        onDelete={() => onRemoveHavingFilter(index)}
+                                        deleteIcon={<CloseIcon />}
+                                        variant="outlined"
+                                        size="small"
+                                        sx={{
+                                            maxWidth: 300,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}
+                                    />
+                                ))}
+                            </Stack>
+                            <Divider sx={{ my: 2 }} />
+                        </Box>
+                    )}
 
-            {/* Добавление нового фильтра */}
-            <div className="add-having-filter">
-                <select
-                    value={column}
-                    onChange={(e) => setColumn(e.target.value)}
-                >
-                    <option value="">Выберите столбец</option>
-                    {aggregates.map((agg) => (
-                        <option key={agg} value={agg.split(":")[0]}>
-                            {agg} {/* Отображаем полное название (например, "salary_from:avg") */}
-                        </option>
-                    ))}
-                </select>
+                    <Grid container spacing={2} alignItems="flex-end">
+                        <Grid item xs={12} sm={5}>
+                            <FormControl fullWidth size="medium" sx={{ minWidth: 200 }}>
+                                <InputLabel>Столбец</InputLabel>
+                                <Select
+                                    value={column}
+                                    onChange={(e) => setColumn(e.target.value)}
+                                    label="Столбец"
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 400,
+                                                width: 350,
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="">
+                                        <em>Выберите столбец</em>
+                                    </MenuItem>
+                                    {aggregates.map((agg) => {
+                                        const [field] = agg.split(":");
+                                        return (
+                                            <MenuItem
+                                                key={agg}
+                                                value={field}
+                                                sx={{
+                                                    whiteSpace: 'normal',
+                                                    wordBreak: 'break-word'
+                                                }}
+                                            >
+                                                {formatAggregate(agg)}
+                                            </MenuItem>
+                                        );
+                                    })}
+                                </Select>
+                            </FormControl>
+                        </Grid>
 
-                <select
-                    value={operator}
-                    onChange={(e) => setOperator(e.target.value)}
-                >
-                    {filteredOperators.map((op) => (
-                        <option key={op.value} value={op.value}>
-                            {op.label} {/* Отображаем текстовую метку (например, "Больше") */}
-                        </option>
-                    ))}
-                </select>
+                        <Grid item xs={12} sm={2}>
+                            <FormControl fullWidth size="medium">
+                                <InputLabel>Оператор</InputLabel>
+                                <Select
+                                    value={operator}
+                                    onChange={(e) => setOperator(e.target.value)}
+                                    label="Оператор"
+                                >
+                                    {filteredOperators.map((op) => (
+                                        <MenuItem key={op.value} value={op.value}>
+                                            {op.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
 
-                <input
-                    type="text"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder="Значение"
-                />
+                        <Grid item xs={12} sm={3}>
+                            <TextField
+                                fullWidth
+                                size="medium"
+                                label="Значение"
+                                value={value}
+                                onChange={(e) => setValue(e.target.value)}
+                                InputProps={{
+                                    style: { height: '44px' }
+                                }}
+                            />
+                        </Grid>
 
-                <button onClick={handleAddHavingFilter}>Добавить фильтр</button>
-            </div>
-        </div>
+                        <Grid item xs={12} sm={2}>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={handleAddHavingFilter}
+                                disabled={!column || !operator || !value}
+                                sx={{
+                                    height: '44px',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                Добавить
+                            </Button>
+                        </Grid>
+                    </Grid>
+
+                    {havingFilters.length > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={handleClearAll}
+                            >
+                                Очистить все
+                            </Button>
+                        </Box>
+                    )}
+                </AccordionDetails>
+            </Accordion>
+        </Paper>
     );
 };
 

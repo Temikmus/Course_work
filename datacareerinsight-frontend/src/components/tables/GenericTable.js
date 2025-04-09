@@ -1,23 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import DynamicTable from '../for_tables/DynamicTable';
+import {
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CardHeader,
+    CircularProgress,
+    Container,
+    Divider,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Typography,
+    Tooltip,
+    Pagination,
+    TextField,
+    MenuItem,
+    Checkbox,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails
+} from '@mui/material';
+import {
+    Refresh as RefreshIcon,
+    ExpandMore as ExpandMoreIcon,
+    Clear as ClearIcon
+} from '@mui/icons-material';
 import Filters from '../for_tables/Filters';
 import GroupBy from '../for_tables/GroupBy';
 import Aggregates from '../for_tables/Aggregates';
 import HavingFilters from '../for_tables/HavingFilters';
 import SortBy from '../for_tables/SortBy';
 import NotNullFilter from '../for_tables/NotNullFilter';
-import LimitFilter from '../for_tables/LimitFilter';
-import '../../styles/VacanciesTable.css'
 
 const GenericTable = ({
                           title = "Данные",
                           apiEndpoint,
-                          fieldsConfig,
+                          fieldsConfig = {
+                              fields: [],
+                              numericAggregations: [],
+                              nonNumericAggregations: [],
+                              dateAggregations: []
+                          },
                           hiddenColumnsByDefault = [],
                           defaultLimit = 8
                       }) => {
-    // Все состояния
     const [data, setData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -31,73 +66,48 @@ const GenericTable = ({
     const [notNull, setNotNull] = useState("");
     const [limit, setLimit] = useState(defaultLimit);
     const [visibleColumns, setVisibleColumns] = useState({});
-
-    // Инициализация видимых колонок (полная версия)
-    useEffect(() => {
-        if (data.length > 0) {
-            const columns = Object.keys(data[0]);
-            const initialVisibility = {};
-
-            columns.forEach((column) => {
-                if (visibleColumns[column] !== undefined) {
-                    initialVisibility[column] = visibleColumns[column];
-                } else {
-                    initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
-                }
-            });
-
-            if (groupBy) {
-                initialVisibility[groupBy] = true;
-            }
-
-            setVisibleColumns(initialVisibility);
-        }
-    }, [data, groupBy]);
+    const [page, setPage] = useState(1);
 
     useEffect(() => {
         if (data.length > 0) {
             const columns = Object.keys(data[0]);
             const initialVisibility = {};
-
             columns.forEach((column) => {
                 initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
             });
 
+            // Если есть группировка, делаем все группируемые столбцы видимыми
             if (groupBy) {
-                initialVisibility[groupBy] = true;
+                const groupByColumns = groupBy.split(',');
+                groupByColumns.forEach(column => {
+                    if (column in initialVisibility) {
+                        initialVisibility[column] = true;
+                    }
+                });
             }
 
             setVisibleColumns(initialVisibility);
         }
-    }, [resetTrigger]);
+    }, [data, groupBy, resetTrigger, hiddenColumnsByDefault]);
 
-    // Полная версия fetchData
-    const fetchData = async (
-        currentOffset,
-        currentFilters,
-        currentGroupBy,
-        currentAggregates,
-        currentHavingFilters,
-        currentSortBy,
-        currentNotNull,
-        currentLimit
-    ) => {
+    const fetchData = async () => {
         try {
-            const filtersString = currentFilters
+            setLoading(true);
+            const filtersString = filters
                 .map((filter) => `${filter.field}${filter.operator}${filter.logic}:${filter.value}`)
                 .join(";");
 
             const params = {
-                offset: Number(currentOffset),
-                limit: Number(currentLimit),
+                offset: Number(offset),
+                limit: Number(limit),
             };
 
             if (filtersString) params.filters = filtersString;
-            if (currentGroupBy) params.group_by = currentGroupBy;
-            if (currentAggregates) params.aggregates = currentAggregates;
-            if (currentHavingFilters?.length > 0) params.having = currentHavingFilters.join("~");
-            if (currentSortBy) params.sort_by = currentSortBy;
-            if (currentNotNull) params.not_null = currentNotNull;
+            if (groupBy) params.group_by = groupBy;
+            if (aggregates) params.aggregates = aggregates;
+            if (havingFilters?.length > 0) params.having = havingFilters.join("~");
+            if (sortBy) params.sort_by = sortBy;
+            if (notNull) params.not_null = notNull;
 
             const response = await axios.get(apiEndpoint, { params });
             setData(response.data.results);
@@ -109,7 +119,6 @@ const GenericTable = ({
         }
     };
 
-    // Все обработчики (полные версии)
     const handleAddFilter = (newFilter) => {
         setFilters([...filters, newFilter]);
     };
@@ -118,16 +127,10 @@ const GenericTable = ({
         setFilters(filters.filter((_, i) => i !== index));
     };
 
-    const handlePageChange = (direction) => {
-        const currentOffset = Number(offset);
-        const currentLimit = Number(limit);
-        const currentTotalCount = Number(totalCount);
-
-        if (direction === 'next' && currentOffset + currentLimit < currentTotalCount) {
-            setOffset(currentOffset + currentLimit);
-        } else if (direction === 'prev' && currentOffset - currentLimit >= 0) {
-            setOffset(currentOffset - currentLimit);
-        }
+    const handlePageChange = (event, value) => {
+        const newOffset = (value - 1) * limit;
+        setOffset(newOffset);
+        setPage(value);
     };
 
     const handleApplyGroupBy = (groupByValue) => {
@@ -161,6 +164,7 @@ const GenericTable = ({
     const handleApplyLimit = (newLimit) => {
         setLimit(newLimit);
         setOffset(0);
+        setPage(1);
     };
 
     const handleReset = () => {
@@ -172,113 +176,274 @@ const GenericTable = ({
         setNotNull("");
         setLimit(defaultLimit);
         setOffset(0);
+        setPage(1);
         setResetTrigger((prev) => !prev);
     };
 
-    // Все эффекты (полные версии)
+    const toggleColumnVisibility = (column) => {
+        setVisibleColumns((prev) => ({
+            ...prev,
+            [column]: !prev[column],
+        }));
+    };
+
+    const handleClearColumns = () => {
+        const columns = Object.keys(data[0]);
+        const resetVisibility = {};
+        columns.forEach((column) => {
+            resetVisibility[column] = !hiddenColumnsByDefault.includes(column);
+        });
+        setVisibleColumns(resetVisibility);
+    };
+
+    const getColumnLabel = (column) => {
+        if (column.includes('_')) {
+            const lastUnderscoreIndex = column.lastIndexOf('_');
+            const fieldName = column.slice(0, lastUnderscoreIndex);
+            const aggregation = column.slice(lastUnderscoreIndex + 1);
+
+            const allAggregations = [
+                ...(fieldsConfig.numericAggregations || []),
+                ...(fieldsConfig.nonNumericAggregations || []),
+                ...(fieldsConfig.dateAggregations || [])
+            ];
+
+            const isAggregated = allAggregations.some(a => a.value === aggregation);
+
+            if (isAggregated) {
+                const field = fieldsConfig.fields.find(f => f.value === fieldName);
+                const fieldLabel = field ? field.label : fieldName;
+
+                const agg = allAggregations.find(a => a.value === aggregation);
+                const aggLabel = agg ? agg.label : aggregation;
+
+                return `${fieldLabel} (${aggLabel})`;
+            }
+        }
+
+        const field = fieldsConfig.fields.find(f => f.value === column);
+        return field ? field.label : column;
+    };
+
     useEffect(() => {
-        fetchData(offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit);
-    }, [offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit]);
+        fetchData();
+    }, [offset, filters, groupBy, aggregates, havingFilters, sortBy, notNull, limit, resetTrigger]);
 
     useEffect(() => {
         setSortBy("");
     }, [filters, groupBy, aggregates, havingFilters, notNull]);
 
     useEffect(() => {
+        setHavingFilters([]);
+    }, [aggregates]);
+
+    useEffect(() => {
         setOffset(0);
     }, [filters, groupBy, aggregates, havingFilters, sortBy, notNull]);
 
-    if (loading) return <div className="loading">Загрузка...</div>;
+    if (loading && data.length === 0) {
+        return (
+            <Box display="flex" justifyContent="center" mt={4}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
-    // Полная версия JSX
     return (
-        <div className="table-container">
-            <h1>{title}</h1>
-            <p>Всего записей: {totalCount}</p>
-
-            <button onClick={handleReset} className="reset-btn">
-                Очистить всё
-            </button>
-
-            <Filters
-                filters={filters}
-                onAddFilter={handleAddFilter}
-                onRemoveFilter={handleRemoveFilter}
-                fieldsConfig={fieldsConfig}
-            />
-
-            <GroupBy
-                groupBy={groupBy}
-                onApplyGroupBy={handleApplyGroupBy}
-                onClearGroupBy={handleClearGroupBy}
-                resetTrigger={resetTrigger}
-                fieldsConfig={fieldsConfig}
-            />
-
-            <Aggregates
-                aggregates={aggregates}
-                onApplyAggregates={handleApplyAggregates}
-                fieldsConfig={fieldsConfig}
-            />
-
-            {groupBy && aggregates && (
-                <HavingFilters
-                    aggregates={aggregates.split(",")}
-                    onAddHavingFilter={handleAddHavingFilter}
-                    onRemoveHavingFilter={handleRemoveHavingFilter}
-                    havingFilters={havingFilters}
-                    fieldsConfig={fieldsConfig}
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+            <Card>
+                <CardHeader
+                    title={title}
+                    action={
+                        <Tooltip title="Очистить всё">
+                            <IconButton onClick={handleReset} color="primary">
+                                <RefreshIcon />
+                            </IconButton>
+                        </Tooltip>
+                    }
+                    sx={{ backgroundColor: (theme) => theme.palette.primary.main, color: 'white' }}
                 />
-            )}
 
-            <NotNullFilter
-                notNull={notNull}
-                onApplyNotNullFilter={handleApplyNotNullFilter}
-                resetTrigger={resetTrigger}
-                fieldsConfig={fieldsConfig}
-            />
+                <CardContent>
+                    <Accordion defaultExpanded>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                <Typography variant="subtitle1">Фильтры и настройки</Typography>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<ClearIcon />}
+                                    onClick={handleReset}
+                                    color="error"
+                                    size="small"
+                                    sx={{ ml: 2 }}
+                                >
+                                    Очистить всё
+                                </Button>
+                            </Box>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} md={6}>
+                                    <Filters
+                                        filters={filters}
+                                        onAddFilter={handleAddFilter}
+                                        onRemoveFilter={handleRemoveFilter}
+                                        fieldsConfig={fieldsConfig}
+                                    />
+                                </Grid>
 
-            <SortBy
-                columns={Object.keys(data[0] || [])}
-                onApplySortBy={handleApplySortBy}
-                sortBy={sortBy}
-                fieldsConfig={fieldsConfig}
-            />
+                                <Grid item xs={12} md={6}>
+                                    <GroupBy
+                                        groupBy={groupBy}
+                                        onApplyGroupBy={handleApplyGroupBy}
+                                        onClearGroupBy={handleClearGroupBy}
+                                        resetTrigger={resetTrigger}
+                                        fieldsConfig={fieldsConfig}
+                                    />
+                                </Grid>
 
-            <DynamicTable
-                data={data}
-                visibleColumns={visibleColumns}
-                onToggleColumn={(column) => {
-                    setVisibleColumns((prev) => ({
-                        ...prev,
-                        [column]: !prev[column],
-                    }));
-                }}
-            />
+                                <Grid item xs={12} md={6}>
+                                    <Aggregates
+                                        aggregates={aggregates}
+                                        onApplyAggregates={handleApplyAggregates}
+                                        fieldsConfig={fieldsConfig}
+                                    />
+                                </Grid>
 
-            <LimitFilter
-                limit={limit}
-                onApplyLimit={handleApplyLimit}
-                resetTrigger={resetTrigger}
-            />
+                                {groupBy && aggregates && (
+                                    <Grid item xs={12} md={6}>
+                                        <HavingFilters
+                                            aggregates={aggregates.split(",")}
+                                            onAddHavingFilter={handleAddHavingFilter}
+                                            onRemoveHavingFilter={handleRemoveHavingFilter}
+                                            havingFilters={havingFilters}
+                                            fieldsConfig={fieldsConfig}
+                                        />
+                                    </Grid>
+                                )}
 
-            <div className="pagination">
-                <button
-                    onClick={() => handlePageChange('prev')}
-                    disabled={offset === 0}
-                    className="pagination-btn"
-                >
-                    Предыдущая страница
-                </button>
-                <button
-                    onClick={() => handlePageChange('next')}
-                    disabled={Number(offset) + Number(limit) >= Number(totalCount)}
-                    className="pagination-btn"
-                >
-                    Следующая страница
-                </button>
-            </div>
-        </div>
+                                <Grid item xs={12} md={6}>
+                                    <NotNullFilter
+                                        notNull={notNull}
+                                        onApplyNotNullFilter={handleApplyNotNullFilter}
+                                        resetTrigger={resetTrigger}
+                                        fieldsConfig={fieldsConfig}
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} md={6}>
+                                    <SortBy
+                                        columns={Object.keys(data[0] || [])}
+                                        onApplySortBy={handleApplySortBy}
+                                        sortBy={sortBy}
+                                        fieldsConfig={fieldsConfig}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </AccordionDetails>
+                    </Accordion>
+
+                    {data.length > 0 && (
+                        <Accordion sx={{ mt: 2 }}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="subtitle1">Настроить видимость столбцов</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Grid container spacing={2}>
+                                    {Object.keys(visibleColumns).map((column) => (
+                                        <Grid item xs={12} sm={6} md={4} key={column}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={visibleColumns[column]}
+                                                        onChange={() => toggleColumnVisibility(column)}
+                                                    />
+                                                }
+                                                label={getColumnLabel(column)}
+                                            />
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </AccordionDetails>
+                        </Accordion>
+                    )}
+
+                    {data.length > 0 ? (
+                        <TableContainer component={Paper} sx={{ mt: 2 }}>
+                            <Table size="small" stickyHeader>
+                                <TableHead>
+                                    <TableRow>
+                                        {Object.keys(data[0]).map(
+                                            (column) =>
+                                                visibleColumns[column] && (
+                                                    <TableCell key={column}>
+                                                        <Typography fontWeight="bold">
+                                                            {getColumnLabel(column)}
+                                                        </Typography>
+                                                    </TableCell>
+                                                )
+                                        )}
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {data.map((row, rowIndex) => (
+                                        <TableRow key={rowIndex}>
+                                            {Object.entries(row).map(
+                                                ([column, value]) =>
+                                                    visibleColumns[column] && (
+                                                        <TableCell key={column}>
+                                                            {Array.isArray(value)
+                                                                ? value.join(", ")
+                                                                : typeof value === 'object'
+                                                                    ? JSON.stringify(value)
+                                                                    : String(value)}
+                                                        </TableCell>
+                                                    )
+                                            )}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    ) : (
+                        <Box sx={{ p: 4, textAlign: 'center' }}>
+                            <Typography variant="body1">Нет данных для отображения</Typography>
+                        </Box>
+                    )}
+
+                    {totalCount > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                            <Typography variant="body2">
+                                Показано {offset + 1}-{Math.min(offset + limit, totalCount)} из {totalCount}
+                            </Typography>
+
+                            <Pagination
+                                count={Math.ceil(totalCount / limit)}
+                                page={page}
+                                onChange={handlePageChange}
+                                color="primary"
+                                showFirstButton
+                                showLastButton
+                            />
+
+                            <TextField
+                                select
+                                size="small"
+                                value={limit}
+                                onChange={(e) => handleApplyLimit(e.target.value)}
+                                sx={{ width: 100 }}
+                            >
+                                {[5, 8, 10, 15, 20, 25, 50].map((option) => (
+                                    <MenuItem key={option} value={option}>
+                                        {option} строк
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Box>
+                    )}
+                </CardContent>
+            </Card>
+        </Container>
     );
 };
 

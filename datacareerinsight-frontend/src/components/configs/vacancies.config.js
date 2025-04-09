@@ -1,9 +1,23 @@
 export const vacanciesFieldsConfig = {
     fields: [
-        "title", "company_name", "currency", "experience", "type_of_employment",
-        "work_format", "skills", "address", "min_experience", "max_experience",
-        "salary_to", "salary_from", "russian_salary_to", "russian_salary_from",
-        "published_at", "archived", "url", "id"
+        { value: "title", label: "Название вакансии" },
+        { value: "company_name", label: "Компании" },
+        { value: "currency", label: "Валюта" },
+        { value: "experience", label: "Опыт" },
+        { value: "type_of_employment", label: "Тип занятости" },
+        { value: "work_format", label: "Формат работы" },
+        { value: "skills", label: "Навыки" },
+        { value: "address", label: "Адрес" },
+        { value: "min_experience", label: "Мин. опыт" },
+        { value: "max_experience", label: "Макс. опыт" },
+        { value: "salary_to", label: "Зарплата до" },
+        { value: "salary_from", label: "Зарплата от" },
+        { value: "russian_salary_to", label: "Зарплата до (руб)" },
+        { value: "russian_salary_from", label: "Зарплата от (руб)" },
+        { value: "published_at", label: "Дата публикации" },
+        { value: "archived", label: "Архивировано" },
+        { value: "url", label: "Ссылка" },
+        { value: "id", label: "ID" }
     ],
     operators: [
         { value: "=", label: "Равно" },
