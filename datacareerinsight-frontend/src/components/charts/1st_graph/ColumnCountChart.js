@@ -5,26 +5,50 @@ import { BarChart, PieChart, ScatterChart } from './ColumnCountChartVisualizatio
 import Filters from '../../for_tables/Filters';
 import { resumeFieldsConfig } from '../../configs/resume.config.js';
 import { vacanciesFieldsConfig } from '../../configs/vacancies.config';
-import { columnTranslations, chartTitles } from '../translations';
-import './ColumnCountChart.css'
+import { columnTranslations } from '../translations';
+import {
+    Box,
+    Card,
+    CardContent,
+    CardHeader,
+    CircularProgress,
+    Container,
+    Divider,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Paper,
+    Select,
+    Typography,
+    IconButton,
+    Tooltip
+} from '@mui/material';
+import {
+    Refresh as RefreshIcon,
+    BarChart as BarChartIcon,
+    PieChart as PieChartIcon,
+    ScatterPlot as ScatterPlotIcon,
+    Info as InfoIcon
+} from '@mui/icons-material';
 
 const columnOptions = {
     vacancies: {
         availableColumns: [
-            "title", "company_name", "currency", "experience", "type_of_employment",
-            "work_format", "skills", "address", "min_experience", "max_experience",
+            "skills","title", "company_name", "currency", "experience", "type_of_employment",
+            "work_format",  "address", "min_experience", "max_experience",
             "salary_to", "salary_from", "russian_salary_to", "russian_salary_from",
-             "published_at", "archived", "url", "id"
+            "published_at", "archived", "url", "id"
         ],
         filtersConfig: vacanciesFieldsConfig
     },
     resume: {
         availableColumns: [
-            "id_resume", "title", "created_at", "updated_at", "age", "gender",
+            "skill_set", "id_resume", "title", "created_at", "updated_at", "age", "gender",
             "salary", "russian_salary", "currency", "photo", "total_experience",
             "citizenship", "area", "level_education", "university", "count_additional_courses",
             "employments", "experience", "language_eng", "language_zho", "schedules",
-            "skill_set", "is_driver", "professional_roles", "url"
+             "is_driver", "professional_roles", "url"
         ],
         filtersConfig: resumeFieldsConfig
     }
@@ -33,7 +57,7 @@ const columnOptions = {
 export const ColumnCountChart = ({ model = 'vacancies' }) => {
     const [column, setColumn] = useState(columnOptions[model].availableColumns[0]);
     const [chartType, setChartType] = useState('bar');
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(15);
 
     const {
         filters,
@@ -81,11 +105,24 @@ export const ColumnCountChart = ({ model = 'vacancies' }) => {
     };
 
     const renderChart = () => {
-        if (loading) return <div className="loading">Загрузка данных...</div>;
-        if (error) return <div className="error">Ошибка: {error}</div>;
+        if (loading) return (
+            <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+                <CircularProgress />
+            </Box>
+        );
+
+        if (error) return (
+            <Box p={2} textAlign="center" color="error.main">
+                Ошибка: {error}
+            </Box>
+        );
 
         if (!data?.data?.labels?.length || !data?.data?.values?.length) {
-            return <div className="no-data">Нет данных для отображения</div>;
+            return (
+                <Box p={2} textAlign="center">
+                    Нет данных для отображения
+                </Box>
+            );
         }
 
         const chartProps = {
@@ -105,59 +142,132 @@ export const ColumnCountChart = ({ model = 'vacancies' }) => {
     };
 
     return (
-        <div className="chart-container">
-            <div className="chart-header">
-                <h2>Распределение по {columnTranslations[model][column] || column}</h2>
-                <div className="chart-controls">
-                    <select
-                        value={column}
-                        onChange={(e) => setColumn(e.target.value)}
-                        className="chart-select"
-                    >
-                        {columnOptions[model].availableColumns.map(col => (
-                            <option key={col} value={col}>
-                                {columnTranslations[model][col] || col}
-                            </option>
-                        ))}
-                    </select>
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Box display="flex" alignItems="center">
+                            <Typography variant="h6" component="div">
+                                Количественное распределение
+                            </Typography>
+                            <Tooltip
+                                title="На данном графике вы можете выбрать столбец, чтобы получить количество наблюдений по каждому значению этого столбца. Берутся первые 'Лимит' значений по количеству."
+                                arrow
+                                placement="right"
+                            >
+                                <IconButton size="small" sx={{ ml: 1 }}>
+                                    <InfoIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    }
+                    subheader={`По столбцу: ${columnTranslations[model][column] || column}`}
+                    action={
+                        <IconButton onClick={clearFilters} color="inherit">
+                            <RefreshIcon />
+                        </IconButton>
+                    }
+                    sx={{
+                        backgroundColor: 'primary.main',
+                        color: 'primary.contrastText',
+                        '& .MuiCardHeader-title': {
+                            fontWeight: 600,
+                            fontSize: '1.25rem'
+                        },
+                        '& .MuiCardHeader-subheader': {
+                            color: 'primary.contrastText',
+                            opacity: 0.8
+                        }
+                    }}
+                />
 
-                    <select
-                        value={chartType}
-                        onChange={(e) => setChartType(e.target.value)}
-                        className="chart-select"
-                    >
-                        <option value="bar">Столбчатая диаграмма</option>
-                        <option value="pie">Круговая диаграмма</option>
-                        <option value="scatter">Точечная диаграмма</option>
-                    </select>
+                <CardContent>
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                        <Grid item xs={12} md={4}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Столбец</InputLabel>
+                                <Select
+                                    value={column}
+                                    onChange={(e) => setColumn(e.target.value)}
+                                    label="Столбец"
+                                >
+                                    {columnOptions[model].availableColumns.map(col => (
+                                        <MenuItem key={col} value={col}>
+                                            {columnTranslations[model][col] || col}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
 
-                    <input
-                        type="number"
-                        value={limit}
-                        onChange={(e) => setLimit(Math.max(1, Math.min(50, Number(e.target.value))))}
-                        min="1"
-                        max="50"
-                        className="chart-input"
-                        placeholder="Лимит"
+                        <Grid item xs={12} md={4}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Тип графика</InputLabel>
+                                <Select
+                                    value={chartType}
+                                    onChange={(e) => setChartType(e.target.value)}
+                                    label="Тип графика"
+                                >
+                                    <MenuItem value="bar">
+                                        <Box display="flex" alignItems="center">
+                                            <BarChartIcon sx={{ mr: 1 }} />
+                                            Столбчатая диаграмма
+                                        </Box>
+                                    </MenuItem>
+                                    <MenuItem value="pie">
+                                        <Box display="flex" alignItems="center">
+                                            <PieChartIcon sx={{ mr: 1 }} />
+                                            Круговая диаграмма
+                                        </Box>
+                                    </MenuItem>
+                                    <MenuItem value="scatter">
+                                        <Box display="flex" alignItems="center">
+                                            <ScatterPlotIcon sx={{ mr: 1 }} />
+                                            Точечная диаграмма
+                                        </Box>
+                                    </MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Лимит</InputLabel>
+                                <Select
+                                    value={limit}
+                                    onChange={(e) => setLimit(e.target.value)}
+                                    label="Лимит"
+                                >
+                                    {[5, 10, 15, 20, 25, 50].map(num => (
+                                        <MenuItem key={num} value={num}>
+                                            {num} значений
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                    </Grid>
+
+                    <Filters
+                        filters={filters}
+                        onAddFilter={addFilter}
+                        onRemoveFilter={removeFilter}
+                        fieldsConfig={columnOptions[model].filtersConfig}
                     />
-                </div>
-            </div>
 
-            <Filters
-                filters={filters}
-                onAddFilter={addFilter}
-                onRemoveFilter={removeFilter}
-                fieldsConfig={columnOptions[model].filtersConfig}
-            />
+                    <Box sx={{ height: 400, mt: 2 }}>
+                        {renderChart()}
+                    </Box>
 
-            <div className="chart-content">
-                {renderChart()}
-                {data?.total_count && (
-                    <div className="chart-footer">
-                        Всего записей: {data.total_count}
-                    </div>
-                )}
-            </div>
-        </div>
+                    {data?.total_count && (
+                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Всего записей: {data.total_count}
+                            </Typography>
+                        </Box>
+                    )}
+                </CardContent>
+            </Card>
+        </Container>
     );
 };

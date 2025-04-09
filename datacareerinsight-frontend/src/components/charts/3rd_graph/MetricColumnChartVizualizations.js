@@ -30,7 +30,7 @@ const getBarOptions = (title, yAxisTitle) => ({
         },
         title: {
             display: true,
-            text: title,
+
             font: {
                 size: 16,
                 weight: 'bold'
@@ -53,7 +53,7 @@ const getBarOptions = (title, yAxisTitle) => ({
         x: {
             title: {
                 display: true,
-                text: 'Категории',
+
                 font: {
                     size: 14,
                     weight: 'bold'

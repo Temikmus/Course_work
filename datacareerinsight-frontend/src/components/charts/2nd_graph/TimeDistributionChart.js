@@ -6,15 +6,37 @@ import Filters from '../../for_tables/Filters';
 import { resumeFieldsConfig } from '../../configs/resume.config';
 import { vacanciesFieldsConfig } from '../../configs/vacancies.config';
 import { columnTranslations, aggregateTranslations } from '../translations';
-import './TimeDistributionChart.css';
-
+import {
+    Box,
+    Card,
+    CardContent,
+    CardHeader,
+    CircularProgress,
+    Container,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Select,
+    Typography,
+    IconButton,
+    Tooltip
+} from '@mui/material';
+import {
+    Refresh as RefreshIcon,
+    ShowChart as LineChartIcon,
+    BarChart as BarChartIcon,
+    ScatterPlot as ScatterPlotIcon,
+    Info as InfoIcon,
+    Timeline as TimelineIcon
+} from '@mui/icons-material';
 
 const columnOptions = {
     vacancies: {
         availableColumns: [
-            "title", "company_name", "currency", "experience", "type_of_employment",
+            "russian_salary_from", "title", "company_name", "currency", "experience", "type_of_employment",
             "work_format", "skills", "address", "min_experience", "max_experience",
-            "salary_to", "salary_from", "russian_salary_to", "russian_salary_from",
+            "salary_to", "salary_from", "russian_salary_to",
             "published_at", "archived", "url", "id"
         ],
         numericColumns: [
@@ -26,8 +48,8 @@ const columnOptions = {
     },
     resume: {
         availableColumns: [
-            "id_resume", "title", "created_at", "updated_at", "age", "gender",
-            "salary", "russian_salary", "currency", "photo", "total_experience",
+            "russian_salary","id_resume", "title", "created_at", "updated_at", "age", "gender",
+            "salary",  "currency", "photo", "total_experience",
             "citizenship", "area", "level_education", "university", "count_additional_courses",
             "employments", "experience", "language_eng", "language_zho", "schedules",
             "skill_set", "is_driver", "professional_roles", "url"
@@ -43,7 +65,7 @@ const columnOptions = {
 
 export const TimeDistributionChart = ({ model = 'vacancies' }) => {
     const [column, setColumn] = useState(columnOptions[model].availableColumns[0]);
-    const [aggregate, setAggregate] = useState(null);
+    const [aggregate, setAggregate] = useState('avg');
     const [chartType, setChartType] = useState('line');
     const isNumeric = columnOptions[model].numericColumns.includes(column);
 
@@ -93,10 +115,29 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
     };
 
     const renderChart = () => {
-        if (!aggregate) return <div className="no-data">Выберите агрегацию</div>;
-        if (loading) return <div className="loading">Загрузка данных...</div>;
-        if (error) return <div className="error">Ошибка: {error}</div>;
-        if (!data?.data?.labels?.length) return <div className="no-data">Нет данных для отображения</div>;
+        if (!aggregate) return (
+            <Box p={2} textAlign="center">
+                Выберите агрегацию
+            </Box>
+        );
+
+        if (loading) return (
+            <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+                <CircularProgress />
+            </Box>
+        );
+
+        if (error) return (
+            <Box p={2} textAlign="center" color="error.main">
+                Ошибка: {error}
+            </Box>
+        );
+
+        if (!data?.data?.labels?.length) return (
+            <Box p={2} textAlign="center">
+                Нет данных для отображения
+            </Box>
+        );
 
         const translatedAggregate = aggregateTranslations[aggregate] || aggregate;
         const title = `${columnTranslations[model][column] || column} (${translatedAggregate})`;
@@ -121,63 +162,132 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
     };
 
     return (
-        <div className="time-chart-container">
-            <div className="time-chart-header">
-                <h2>Динамика {columnTranslations[model][column] || column}</h2>
-                <div className="time-chart-controls">
-                    <select
-                        value={column}
-                        onChange={(e) => handleColumnChange(e.target.value)}
-                        className="time-chart-select"
-                    >
-                        {columnOptions[model].availableColumns.map(col => (
-                            <option key={col} value={col}>
-                                {columnTranslations[model][col] || col}
-                            </option>
-                        ))}
-                    </select>
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Box display="flex" alignItems="center">
+                            <Typography variant="h6" component="div">
+                                Распределение по времени
+                            </Typography>
+                            <Tooltip
+                                title="На данном графике вы можете посмотреть среднее/максимальное и т.д. значение для определенного столбца с течением времени"
+                                arrow
+                                placement="right"
+                            >
+                                <IconButton size="small" sx={{ ml: 1 }}>
+                                    <InfoIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    }
+                    subheader={`Анализ столбца: ${columnTranslations[model][column] || column}`}
+                    action={
+                        <IconButton onClick={clearFilters} color="inherit">
+                            <RefreshIcon />
+                        </IconButton>
+                    }
+                    sx={{
+                        backgroundColor: 'primary.main',
+                        color: 'primary.contrastText',
+                        '& .MuiCardHeader-title': {
+                            fontWeight: 600,
+                            fontSize: '1.25rem'
+                        },
+                        '& .MuiCardHeader-subheader': {
+                            color: 'primary.contrastText',
+                            opacity: 0.8
+                        }
+                    }}
+                />
 
-                    <select
-                        value={aggregate || ''}
-                        onChange={(e) => setAggregate(e.target.value)}
-                        className="time-chart-select"
-                        disabled={availableAggregates.length === 0}
-                    >
+                <CardContent>
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                        <Grid item xs={12} md={4}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Столбец</InputLabel>
+                                <Select
+                                    value={column}
+                                    onChange={(e) => handleColumnChange(e.target.value)}
+                                    label="Столбец"
+                                >
+                                    {columnOptions[model].availableColumns.map(col => (
+                                        <MenuItem key={col} value={col}>
+                                            {columnTranslations[model][col] || col}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
 
-                        {availableAggregates.map(agg => (
-                            <option key={agg} value={agg}>
-                                {aggregateTranslations[agg] || agg}
-                            </option>
-                        ))}
-                    </select>
+                        <Grid item xs={12} md={4}>
+                            <FormControl fullWidth size="small" disabled={availableAggregates.length === 0}>
+                                <InputLabel>Агрегация</InputLabel>
+                                <Select
+                                    value={aggregate || ''}
+                                    onChange={(e) => setAggregate(e.target.value)}
+                                    label="Агрегация"
+                                >
+                                    {availableAggregates.map(agg => (
+                                        <MenuItem key={agg} value={agg}>
+                                            {aggregateTranslations[agg] || agg}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
 
-                    <select
-                        value={chartType}
-                        onChange={(e) => setChartType(e.target.value)}
-                        className="time-chart-select"
-                    >
-                        <option value="line">Линейный</option>
-                        <option value="bar">Столбчатый</option>
-                        <option value="scatter">Точечный</option>
-                    </select>
-                </div>
-            </div>
+                        <Grid item xs={12} md={4}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Тип графика</InputLabel>
+                                <Select
+                                    value={chartType}
+                                    onChange={(e) => setChartType(e.target.value)}
+                                    label="Тип графика"
+                                >
+                                    <MenuItem value="line">
+                                        <Box display="flex" alignItems="center">
+                                            <LineChartIcon sx={{ mr: 1 }} />
+                                            Линейный
+                                        </Box>
+                                    </MenuItem>
+                                    <MenuItem value="bar">
+                                        <Box display="flex" alignItems="center">
+                                            <BarChartIcon sx={{ mr: 1 }} />
+                                            Столбчатый
+                                        </Box>
+                                    </MenuItem>
+                                    <MenuItem value="scatter">
+                                        <Box display="flex" alignItems="center">
+                                            <ScatterPlotIcon sx={{ mr: 1 }} />
+                                            Точечный
+                                        </Box>
+                                    </MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                    </Grid>
 
-            <Filters
-                filters={filters}
-                onAddFilter={addFilter}
-                onRemoveFilter={removeFilter}
-                fieldsConfig={columnOptions[model].filtersConfig}
-            />
+                    <Filters
+                        filters={filters}
+                        onAddFilter={addFilter}
+                        onRemoveFilter={removeFilter}
+                        fieldsConfig={columnOptions[model].filtersConfig}
+                    />
 
-            <div className="time-chart-content">
-                {renderChart()}
-                {data?.total_count && (
-                    <div className="time-chart-footer">
-                        Всего периодов: {data.total_count}
-                    </div>
-                )}
-            </div>
-        </div>
+                    <Box sx={{ height: 400, mt: 2 }}>
+                        {renderChart()}
+                    </Box>
+
+                    {data?.total_count && (
+                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Всего периодов: {data.total_count}
+                            </Typography>
+                        </Box>
+                    )}
+                </CardContent>
+            </Card>
+        </Container>
     );
 };

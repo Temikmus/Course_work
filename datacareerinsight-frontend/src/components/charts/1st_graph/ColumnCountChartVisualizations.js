@@ -54,7 +54,7 @@ export const BarChart = ({ labels, values, columnName }) => {
             x: {
                 title: {
                     display: true,
-                    text: 'Категории',
+
                     font: {
                         size: 14,
                         weight: 'bold'
@@ -146,7 +146,7 @@ export const ScatterChart = ({ labels, values, columnName }) => {
                 labels: labels,
                 title: {
                     display: true,
-                    text: 'Категории',
+
                     font: {
                         size: 14,
                         weight: 'bold'

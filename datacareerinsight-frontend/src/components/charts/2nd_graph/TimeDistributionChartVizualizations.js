@@ -82,7 +82,7 @@ const getTimeOptions = (title, yAxisTitle, isNumeric) => ({
         x: {
             title: {
                 display: true,
-                text: 'Период',
+
                 font: {
                     size: 14,
                     weight: 'bold',
@@ -200,7 +200,7 @@ export const TimeScatterChart = ({ labels, values, countValues, title, isNumeric
                 labels: formattedLabels, // Используем отформатированные даты
                 title: {
                     display: true,
-                    text: 'Период',
+
                     font: {
                         size: 14,
                         weight: 'bold',

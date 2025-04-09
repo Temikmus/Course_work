@@ -33,8 +33,8 @@ export const columnTranslations = {
         salary: 'Зарплата',
         russian_salary: 'Зарплата (руб)',
         currency: 'Валюта',
-        photo: 'Фото',
-        total_experience: 'Общий опыт',
+        photo: 'Есть фото',
+        total_experience: 'Общий опыт (мес.)',
         citizenship: 'Гражданство',
         level_education: 'Уровень образования',
         university: 'Университеты',
@@ -43,7 +43,7 @@ export const columnTranslations = {
         language_eng: 'Уровень английского',
         language_zho: 'Уровень китайского',
         schedules: 'График',
-        is_driver: 'Водительские права',
+        is_driver: 'Есть водительские права',
         url: 'Ссылка',
         id_resume: 'ID'
     }

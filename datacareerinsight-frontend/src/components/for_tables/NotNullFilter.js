@@ -89,7 +89,7 @@ const NotNullFilter = ({
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12}>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
-                                В выбранных столбцах не будет пропусков
+                                В выбранных столбцах не будет пропусков (null)
                             </Typography>
                             <Button
                                 fullWidth
