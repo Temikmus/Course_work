@@ -8,7 +8,6 @@ import {
     CardHeader,
     CircularProgress,
     Container,
-    Divider,
     FormControlLabel,
     Grid,
     IconButton,
@@ -40,6 +39,11 @@ import Aggregates from '../for_tables/Aggregates';
 import HavingFilters from '../for_tables/HavingFilters';
 import SortBy from '../for_tables/SortBy';
 import NotNullFilter from '../for_tables/NotNullFilter';
+import { useRowResize } from '../charts/hooks/useRowResize';
+import { useTheme } from '@mui/material/styles';
+
+const DEFAULT_ROW_HEIGHT = 52;
+const MAX_ROW_HEIGHT = 300;
 
 const GenericTable = ({
                           title = "Данные",
@@ -67,6 +71,16 @@ const GenericTable = ({
     const [limit, setLimit] = useState(defaultLimit);
     const [visibleColumns, setVisibleColumns] = useState({});
     const [page, setPage] = useState(1);
+    const theme = useTheme();
+    const { rowHeights, handleMouseDown, hoveredRow, setHoveredRow } = useRowResize(DEFAULT_ROW_HEIGHT);
+
+    // Цветовая схема
+    const headerBgColor = 'rgba(54, 162, 235, 1)';
+    const headerTextColor = theme.palette.primary.contrastText;
+    const evenRowBgColor = theme.palette.background.paper;
+    const oddRowBgColor = theme.palette.grey[50];
+    const hoverRowBgColor = theme.palette.action.hover;
+    const borderColor = theme.palette.divider;
 
     useEffect(() => {
         if (data.length > 0) {
@@ -76,7 +90,6 @@ const GenericTable = ({
                 initialVisibility[column] = !hiddenColumnsByDefault.includes(column);
             });
 
-            // Если есть группировка, делаем все группируемые столбцы видимыми
             if (groupBy) {
                 const groupByColumns = groupBy.split(',');
                 groupByColumns.forEach(column => {
@@ -256,30 +269,24 @@ const GenericTable = ({
                     title={title}
                     action={
                         <Tooltip title="Очистить всё">
-                            <IconButton onClick={handleReset} color="primary">
+                            <IconButton onClick={handleReset} sx={{ color: 'white' }}>
                                 <RefreshIcon />
                             </IconButton>
                         </Tooltip>
                     }
-                    sx={{ backgroundColor: (theme) => theme.palette.primary.main, color: 'white' }}
+                    sx={{
+                        backgroundColor: headerBgColor,
+                        color: headerTextColor,
+                        '& .MuiCardHeader-title': {
+                            fontWeight: 600
+                        }
+                    }}
                 />
 
                 <CardContent>
-                    <Accordion defaultExpanded>
+                    <Accordion defaultExpanded sx={{ mb: 2 }}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                <Typography variant="subtitle1">Фильтры и настройки</Typography>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<ClearIcon />}
-                                    onClick={handleReset}
-                                    color="error"
-                                    size="small"
-                                    sx={{ ml: 2 }}
-                                >
-                                    Очистить всё
-                                </Button>
-                            </Box>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>Фильтры и настройки</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                             <Grid container spacing={2}>
@@ -339,14 +346,29 @@ const GenericTable = ({
                                         fieldsConfig={fieldsConfig}
                                     />
                                 </Grid>
+
+                                {/* Добавлена кнопка "Очистить всё" в конец аккордеона */}
+                                <Grid item xs={12}>
+                                    <Box display="flex" justifyContent="flex-end" mt={2}>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<ClearIcon />}
+                                            onClick={handleReset}
+                                            color="error"
+                                            size="medium"
+                                        >
+                                            Очистить всё
+                                        </Button>
+                                    </Box>
+                                </Grid>
                             </Grid>
                         </AccordionDetails>
                     </Accordion>
 
                     {data.length > 0 && (
-                        <Accordion sx={{ mt: 2 }}>
+                        <Accordion sx={{ mb: 2 }}>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                <Typography variant="subtitle1">Настроить видимость столбцов</Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>Настроить видимость столбцов</Typography>
                             </AccordionSummary>
                             <AccordionDetails>
                                 <Grid container spacing={2}>
@@ -357,6 +379,7 @@ const GenericTable = ({
                                                     <Checkbox
                                                         checked={visibleColumns[column]}
                                                         onChange={() => toggleColumnVisibility(column)}
+                                                        color="primary"
                                                     />
                                                 }
                                                 label={getColumnLabel(column)}
@@ -369,39 +392,128 @@ const GenericTable = ({
                     )}
 
                     {data.length > 0 ? (
-                        <TableContainer component={Paper} sx={{ mt: 2 }}>
-                            <Table size="small" stickyHeader>
+                        <TableContainer
+                            component={Paper}
+                            sx={{
+                                mt: 2,
+                                width: '100%',
+                                overflowX: 'auto',
+                                border: `1px solid ${theme.palette.divider}`,
+                                borderRadius: '4px'
+                            }}
+                        >
+                            <Table
+                                size="small"
+                                stickyHeader
+                                sx={{
+                                    tableLayout: 'fixed',
+                                    minWidth: '100%'
+                                }}
+                            >
                                 <TableHead>
                                     <TableRow>
                                         {Object.keys(data[0]).map(
                                             (column) =>
                                                 visibleColumns[column] && (
-                                                    <TableCell key={column}>
-                                                        <Typography fontWeight="bold">
-                                                            {getColumnLabel(column)}
-                                                        </Typography>
+                                                    <TableCell
+                                                        key={column}
+                                                        sx={{
+                                                            backgroundColor: theme.palette.primary.main,
+                                                            color: theme.palette.primary.contrastText,
+                                                            fontWeight: 'bold',
+                                                            width: '200px' // Фиксированная ширина для всех ячеек
+                                                        }}
+                                                    >
+                                                        {getColumnLabel(column)}
                                                     </TableCell>
                                                 )
                                         )}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {data.map((row, rowIndex) => (
-                                        <TableRow key={rowIndex}>
-                                            {Object.entries(row).map(
-                                                ([column, value]) =>
-                                                    visibleColumns[column] && (
-                                                        <TableCell key={column}>
-                                                            {Array.isArray(value)
-                                                                ? value.join(", ")
-                                                                : typeof value === 'object'
-                                                                    ? JSON.stringify(value)
-                                                                    : String(value)}
-                                                        </TableCell>
-                                                    )
-                                            )}
-                                        </TableRow>
-                                    ))}
+                                    {data.map((row, rowIndex) => {
+                                        const currentHeight = rowHeights[rowIndex] || DEFAULT_ROW_HEIGHT;
+                                        return (
+                                            <TableRow
+                                                key={rowIndex}
+                                                style={{
+                                                    height: currentHeight,
+                                                    position: 'relative',
+                                                    backgroundColor: rowIndex % 2 === 0
+                                                        ? theme.palette.background.paper
+                                                        : theme.palette.grey[50]
+                                                }}
+                                                sx={{
+                                                    '&:hover': {
+                                                        backgroundColor: theme.palette.action.hover
+                                                    },
+                                                    '&:hover .resize-handle': {
+                                                        opacity: 1,
+                                                        backgroundColor: theme.palette.primary.main
+                                                    }
+                                                }}
+                                            >
+                                                {Object.entries(row).map(
+                                                    ([column, value]) =>
+                                                        visibleColumns[column] && (
+                                                            <TableCell
+                                                                key={column}
+                                                                sx={{
+                                                                    width: '200px', // Такая же ширина как в заголовке
+                                                                    maxHeight: currentHeight,
+                                                                    overflow: 'hidden',
+                                                                    position: 'relative',
+                                                                    padding: '8px 16px',
+                                                                    borderBottom: `1px solid ${theme.palette.divider}`
+                                                                }}
+                                                            >
+                                                                <div style={{
+                                                                    maxHeight: currentHeight - 16,
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    display: '-webkit-box',
+                                                                    WebkitLineClamp: Math.floor(currentHeight / 24),
+                                                                    WebkitBoxOrient: 'vertical'
+                                                                }}>
+                                                                    {Array.isArray(value)
+                                                                        ? value.join(", ")
+                                                                        : typeof value === 'object'
+                                                                            ? JSON.stringify(value)
+                                                                            : String(value)}
+                                                                </div>
+                                                            </TableCell>
+                                                        )
+                                                )}
+                                                <TableCell
+                                                    padding="none"
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        bottom: 0,
+                                                        left: 0,
+                                                        right: 0,
+                                                        height: '4px',
+                                                        padding: 0,
+                                                        border: 'none'
+                                                    }}
+                                                >
+                                                    <div
+                                                        className="resize-handle"
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            cursor: 'row-resize',
+                                                            backgroundColor: theme.palette.primary.main,
+                                                            opacity: 0,
+                                                            transition: 'opacity 0.2s ease'
+                                                        }}
+                                                        onMouseDown={(e) => handleMouseDown(rowIndex, e)}
+                                                        onMouseEnter={() => setHoveredRow(rowIndex)}
+                                                        onMouseLeave={() => setHoveredRow(null)}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </TableContainer>
@@ -412,7 +524,15 @@ const GenericTable = ({
                     )}
 
                     {totalCount > 0 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                        <Box sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mt: 2,
+                            p: 1,
+                            backgroundColor: oddRowBgColor,
+                            borderRadius: 1
+                        }}>
                             <Typography variant="body2">
                                 Показано {offset + 1}-{Math.min(offset + limit, totalCount)} из {totalCount}
                             </Typography>
@@ -432,6 +552,7 @@ const GenericTable = ({
                                 value={limit}
                                 onChange={(e) => handleApplyLimit(e.target.value)}
                                 sx={{ width: 100 }}
+                                variant="outlined"
                             >
                                 {[5, 8, 10, 15, 20, 25, 50].map((option) => (
                                     <MenuItem key={option} value={option}>

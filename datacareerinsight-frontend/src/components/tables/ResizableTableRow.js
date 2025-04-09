@@ -5,9 +5,11 @@ export const ResizableTableRow = ({ children, defaultHeight = 48, onHeightChange
     const [height, setHeight] = useState(defaultHeight);
     const startYRef = useRef(0);
     const startHeightRef = useRef(0);
+    const [isResizing, setIsResizing] = useState(false);
 
     const handleMouseDown = (e) => {
         if (e.target.dataset.resize === 'handle') {
+            setIsResizing(true);
             startYRef.current = e.clientY;
             startHeightRef.current = height;
             document.addEventListener('mousemove', handleMouseMove);
@@ -24,6 +26,7 @@ export const ResizableTableRow = ({ children, defaultHeight = 48, onHeightChange
     };
 
     const handleMouseUp = () => {
+        setIsResizing(false);
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -33,6 +36,7 @@ export const ResizableTableRow = ({ children, defaultHeight = 48, onHeightChange
             style={{ height }}
             onMouseDown={handleMouseDown}
             sx={{
+                backgroundColor: isResizing ? 'action.hover' : 'inherit',
                 position: 'relative',
                 '&:hover::after': {
                     content: '""',
