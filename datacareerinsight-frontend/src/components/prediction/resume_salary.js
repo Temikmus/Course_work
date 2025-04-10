@@ -193,8 +193,14 @@ const ResumeSalaryPredictor = () => {
     }
 
     return (
-        <Paper elevation={3} sx={{ p: 3, maxWidth: 800, margin: 'auto', mt: 4 }}>
-            <Typography variant="h5" gutterBottom align="center">
+        <Paper elevation={3} sx={{
+            p: 3,
+            maxWidth: 800,
+            margin: 'auto',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            borderRadius: 2
+        }}>
+            <Typography variant="h5" gutterBottom align="center" sx={{ color: 'black' }}>
                 Калькулятор зарплаты для резюме
             </Typography>
 
@@ -394,10 +400,17 @@ const ResumeSalaryPredictor = () => {
                     <Button
                         fullWidth
                         variant="outlined"
-                        color="secondary"
                         onClick={handleReset}
                         disabled={loading}
                         size="large"
+                        sx={{
+                            color: '#81c784',
+                            borderColor: '#81c784',
+                            '&:hover': {
+                                borderColor: '#66bb6a',
+                                backgroundColor: 'rgba(129, 199, 132, 0.08)'
+                            }
+                        }}
                     >
                         Очистить
                     </Button>
@@ -406,10 +419,15 @@ const ResumeSalaryPredictor = () => {
                     <Button
                         fullWidth
                         variant="contained"
-                        color="primary"
                         onClick={handlePredict}
                         disabled={loading}
                         size="large"
+                        sx={{
+                            backgroundColor: '#81c784',
+                            '&:hover': {
+                                backgroundColor: '#66bb6a'
+                            }
+                        }}
                     >
                         {loading ? <CircularProgress size={24} /> : 'Рассчитать зарплату'}
                     </Button>
