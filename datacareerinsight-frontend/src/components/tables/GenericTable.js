@@ -39,7 +39,7 @@ import Aggregates from '../for_tables/Aggregates';
 import HavingFilters from '../for_tables/HavingFilters';
 import SortBy from '../for_tables/SortBy';
 import NotNullFilter from '../for_tables/NotNullFilter';
-import { useRowResize } from '../charts/hooks/useRowResize';
+import { useRowResize } from '../hooks/useRowResize';
 import { useTheme } from '@mui/material/styles';
 
 const DEFAULT_ROW_HEIGHT = 52;

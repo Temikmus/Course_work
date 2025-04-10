@@ -12,7 +12,7 @@ def parse_having(having_str):
     """
     Преобразует строку HAVING в словарь.
     Пример:
-        Вход: "salary_from:avg>50000;id:count<100"
+        Вход: "salary_from:avg>50000~id:count<100"
         Выход: { "salary_from": ("avg", ">", "50000"), "id": ("count", "<", "100") }
     """
     having_conditions = {}

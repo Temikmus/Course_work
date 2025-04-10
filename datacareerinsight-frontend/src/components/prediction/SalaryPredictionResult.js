@@ -60,7 +60,7 @@ const SalaryPredictionResult = ({ data }) => {
 
             <Divider sx={{ my: 2, borderColor: 'rgba(129, 199, 132, 0.3)' }} />
 
-            
+
 
             {/* Детали модели */}
             <Accordion defaultExpanded sx={{

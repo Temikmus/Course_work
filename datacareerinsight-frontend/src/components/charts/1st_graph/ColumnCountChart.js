@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useChartData } from '../hooks/useChartData';
-import { useChartFilters } from '../hooks/useChartFilters';
+import { useChartData } from '../../hooks/useChartData';
+import { useChartFilters } from '../../hooks/useChartFilters';
 import { BarChart, PieChart, ScatterChart } from './ColumnCountChartVisualizations';
 import Filters from '../../for_tables/Filters';
 import { resumeFieldsConfig } from '../../configs/resume.config.js';

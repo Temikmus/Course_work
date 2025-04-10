@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useChartData } from '../hooks/useChartData';
-import { useChartFilters } from '../hooks/useChartFilters';
+import { useChartData } from '../../hooks/useChartData';
+import { useChartFilters } from '../../hooks/useChartFilters';
 import { MetricColumnBarChart, MetricColumnLineChart, MetricColumnPieChart } from './MetricColumnChartVizualizations';
 import Filters from '../../for_tables/Filters';
 import { resumeFieldsConfig } from '../../configs/resume.config';
