@@ -49,6 +49,17 @@ const columnOptions = {
     }
 };
 
+const modelColors = {
+    vacancies: {
+        primary: '#8bbaf0',      // Светлый цвет из градиента (было #5d9cec)
+        contrastText: '#ffffff'  // Белый текст
+    },
+    resume: {
+        primary: '#b39ddb',      // Фиолетовый для резюме
+        contrastText: '#ffffff'
+    }
+};
+
 export const MetricDistributionChart = ({ model = 'vacancies' }) => {
     const [column, setColumn] = useState(columnOptions[model].availableColumns[0]);
     const [numberRange, setNumberRange] = useState(9);
@@ -114,7 +125,8 @@ export const MetricDistributionChart = ({ model = 'vacancies' }) => {
         const chartProps = {
             labels: data.data.labels,
             values: data.data.values,
-            title: title
+            title: title,
+            model: model
         };
 
         switch (chartType) {
@@ -127,11 +139,15 @@ export const MetricDistributionChart = ({ model = 'vacancies' }) => {
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Card>
+            <Card sx={{
+                border: `2px solid ${modelColors[model].primary}`,
+                borderRadius: '8px',
+                boxShadow: 3
+            }}>
                 <CardHeader
                     title={
                         <Box display="flex" alignItems="center">
-                            <Typography variant="h6" component="div">
+                            <Typography variant="h6" component="div" sx={{ color: modelColors[model].contrastText }}>
                                 Распределение значений по диапазонам
                             </Typography>
                             <Tooltip
@@ -139,28 +155,30 @@ export const MetricDistributionChart = ({ model = 'vacancies' }) => {
                                 arrow
                                 placement="right"
                             >
-                                <IconButton size="small" sx={{ ml: 1 }}>
+                                <IconButton size="small" sx={{ ml: 1, color: modelColors[model].contrastText }}>
                                     <InfoIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
                         </Box>
                     }
-                    subheader={`Анализ столбца: ${columnTranslations[model][column] || column}`}
+                    subheader={
+                        <Typography variant="subtitle1" sx={{ color: modelColors[model].contrastText, opacity: 0.9 }}>
+                            Анализ столбца: {columnTranslations[model][column] || column}
+                        </Typography>
+                    }
                     action={
-                        <IconButton onClick={clearFilters} color="inherit">
+                        <IconButton onClick={clearFilters} sx={{ color: modelColors[model].contrastText }}>
                             <RefreshIcon />
                         </IconButton>
                     }
                     sx={{
-                        backgroundColor: 'primary.main',
-                        color: 'primary.contrastText',
+                        backgroundColor: modelColors[model].primary,
                         '& .MuiCardHeader-title': {
                             fontWeight: 600,
                             fontSize: '1.25rem'
                         },
                         '& .MuiCardHeader-subheader': {
-                            color: 'primary.contrastText',
-                            opacity: 0.8
+                            opacity: 0.9
                         }
                     }}
                 />
@@ -184,7 +202,6 @@ export const MetricDistributionChart = ({ model = 'vacancies' }) => {
                                 </Select>
                             </FormControl>
                         </Grid>
-
 
                         {/* Тип графика */}
                         <Grid item xs={12} md={4}>
@@ -219,11 +236,13 @@ export const MetricDistributionChart = ({ model = 'vacancies' }) => {
                                     p: 1,
                                     display: 'flex',
                                     alignItems: 'center',
-                                    height: '100%',
+                                    height: '46%',
                                     justifyContent: 'space-between'
                                 }}
                             >
-                                <Typography variant="body2" sx={{ ml: 1, whiteSpace: 'nowrap',
+                                <Typography variant="body2" sx={{
+                                    ml: 0,
+                                    whiteSpace: 'nowrap',
                                     minWidth: '180px',
                                     textAlign: 'center'
                                 }}>
@@ -263,7 +282,6 @@ export const MetricDistributionChart = ({ model = 'vacancies' }) => {
                                 </Box>
                             </Paper>
                         </Grid>
-
                     </Grid>
 
                     <Filters
@@ -276,8 +294,6 @@ export const MetricDistributionChart = ({ model = 'vacancies' }) => {
                     <Box sx={{ height: 400, mt: 2 }}>
                         {renderChart()}
                     </Box>
-
-
                 </CardContent>
             </Card>
         </Container>

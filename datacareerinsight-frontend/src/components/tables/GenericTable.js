@@ -55,7 +55,8 @@ const GenericTable = ({
                               dateAggregations: []
                           },
                           hiddenColumnsByDefault = [],
-                          defaultLimit = 8
+                          defaultLimit = 8,
+                          colorTheme = 'primary'
                       }) => {
     const [data, setData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -74,9 +75,22 @@ const GenericTable = ({
     const theme = useTheme();
     const { rowHeights, handleMouseDown, hoveredRow, setHoveredRow } = useRowResize(DEFAULT_ROW_HEIGHT);
 
-    // Цветовая схема
-    const headerBgColor = 'rgba(54, 162, 235, 1)';
-    const headerTextColor = theme.palette.primary.contrastText;
+    // Цветовые схемы
+    const colorSchemes = {
+        primary: {
+            main: '#8bbaf0',       // Светлый голубовато-синий (нежный)
+            contrastText: 'white' // Насыщенный синий (для контраста)
+        },
+        resume: {
+            main: '#b39ddb', // Нежно-фиолетовый (второй цвет градиента)
+            contrastText: 'white' // Мягкий фиолетовый (первый цвет градиента)
+        }
+    };
+
+    const colors = colorSchemes[colorTheme] || colorSchemes.primary;
+
+    const headerBgColor = colors.main;
+    const headerTextColor = colors.contrastText;
     const evenRowBgColor = theme.palette.background.paper;
     const oddRowBgColor = theme.palette.grey[50];
     const hoverRowBgColor = theme.palette.action.hover;
@@ -264,12 +278,15 @@ const GenericTable = ({
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Card>
+            <Card sx={{
+                border: `2px solid ${headerBgColor}`,
+                borderRadius: '8px',
+            }}>
                 <CardHeader
                     title={title}
                     action={
                         <Tooltip title="Очистить всё">
-                            <IconButton onClick={handleReset} sx={{ color: 'white' }}>
+                            <IconButton onClick={handleReset} sx={{ color: headerTextColor }}>
                                 <RefreshIcon />
                             </IconButton>
                         </Tooltip>
@@ -284,7 +301,7 @@ const GenericTable = ({
                 />
 
                 <CardContent>
-                    <Accordion defaultExpanded sx={{ mb: 2 }}>
+                    <Accordion defaultExpanded={false} sx={{ mb: 2 }}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>Фильтры и настройки</Typography>
                         </AccordionSummary>
@@ -347,7 +364,6 @@ const GenericTable = ({
                                     />
                                 </Grid>
 
-                                {/* Добавлена кнопка "Очистить всё" в конец аккордеона */}
                                 <Grid item xs={12}>
                                     <Box display="flex" justifyContent="flex-end" mt={2}>
                                         <Button
@@ -398,7 +414,7 @@ const GenericTable = ({
                                 mt: 2,
                                 width: '100%',
                                 overflowX: 'auto',
-                                border: `1px solid ${theme.palette.divider}`,
+                                border: `1px solid ${borderColor}`,
                                 borderRadius: '4px'
                             }}
                         >
@@ -418,10 +434,10 @@ const GenericTable = ({
                                                     <TableCell
                                                         key={column}
                                                         sx={{
-                                                            backgroundColor: theme.palette.primary.main,
-                                                            color: theme.palette.primary.contrastText,
+                                                            backgroundColor: headerBgColor,
+                                                            color: headerTextColor,
                                                             fontWeight: 'bold',
-                                                            width: '200px' // Фиксированная ширина для всех ячеек
+                                                            width: '200px'
                                                         }}
                                                     >
                                                         {getColumnLabel(column)}
@@ -440,16 +456,16 @@ const GenericTable = ({
                                                     height: currentHeight,
                                                     position: 'relative',
                                                     backgroundColor: rowIndex % 2 === 0
-                                                        ? theme.palette.background.paper
-                                                        : theme.palette.grey[50]
+                                                        ? evenRowBgColor
+                                                        : oddRowBgColor
                                                 }}
                                                 sx={{
                                                     '&:hover': {
-                                                        backgroundColor: theme.palette.action.hover
+                                                        backgroundColor: hoverRowBgColor
                                                     },
                                                     '&:hover .resize-handle': {
                                                         opacity: 1,
-                                                        backgroundColor: theme.palette.primary.main
+                                                        backgroundColor: headerBgColor
                                                     }
                                                 }}
                                             >
@@ -459,12 +475,12 @@ const GenericTable = ({
                                                             <TableCell
                                                                 key={column}
                                                                 sx={{
-                                                                    width: '200px', // Такая же ширина как в заголовке
+                                                                    width: '200px',
                                                                     maxHeight: currentHeight,
                                                                     overflow: 'hidden',
                                                                     position: 'relative',
                                                                     padding: '8px 16px',
-                                                                    borderBottom: `1px solid ${theme.palette.divider}`
+                                                                    borderBottom: `1px solid ${borderColor}`
                                                                 }}
                                                             >
                                                                 <div style={{
@@ -502,7 +518,7 @@ const GenericTable = ({
                                                             width: '100%',
                                                             height: '100%',
                                                             cursor: 'row-resize',
-                                                            backgroundColor: theme.palette.primary.main,
+                                                            backgroundColor: headerBgColor,
                                                             opacity: 0,
                                                             transition: 'opacity 0.2s ease'
                                                         }}
@@ -541,7 +557,27 @@ const GenericTable = ({
                                 count={Math.ceil(totalCount / limit)}
                                 page={page}
                                 onChange={handlePageChange}
-                                color="primary"
+                                sx={{
+                                    '& .MuiPaginationItem-root': {
+                                        color: headerBgColor,
+                                        transition: 'all 0.3s ease',
+                                    },
+                                    '& .MuiPaginationItem-page.Mui-selected': {
+                                        backgroundColor: headerBgColor,
+                                        color: headerTextColor,
+                                        '&:hover': {
+                                            backgroundColor: headerBgColor,
+                                            opacity: 0.9
+                                        }
+                                    },
+                                    '& .MuiPaginationItem-page:hover': {
+                                        backgroundColor: `${headerBgColor}`,
+                                        transform: 'scale(1.05)'
+                                    },
+                                    '& .MuiPaginationItem-ellipsis': {
+                                        color: headerBgColor
+                                    }
+                                }}
                                 showFirstButton
                                 showLastButton
                             />

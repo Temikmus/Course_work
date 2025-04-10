@@ -48,9 +48,20 @@ const columnOptions = {
             "salary", "russian_salary", "currency", "photo", "total_experience",
             "citizenship", "area", "level_education", "university", "count_additional_courses",
             "employments", "experience", "language_eng", "language_zho", "schedules",
-             "is_driver", "professional_roles", "url"
+            "is_driver", "professional_roles", "url"
         ],
         filtersConfig: resumeFieldsConfig
+    }
+};
+
+const modelColors = {
+    vacancies: {
+        primary: '#8bbaf0',      // Светлый цвет из градиента (было #5d9cec)
+        contrastText: '#ffffff'  // Белый текст
+    },
+    resume: {
+        primary: '#b39ddb',      // Фиолетовый для резюме
+        contrastText: '#ffffff'
     }
 };
 
@@ -128,7 +139,8 @@ export const ColumnCountChart = ({ model = 'vacancies' }) => {
         const chartProps = {
             labels: translateLabels(data.data.labels),
             values: data.data.values.map(Number),
-            columnName: columnTranslations[model][column] || column
+            columnName: columnTranslations[model][column] || column,
+            model
         };
 
         switch (chartType) {
@@ -143,11 +155,15 @@ export const ColumnCountChart = ({ model = 'vacancies' }) => {
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Card>
+            <Card sx={{
+                border: `2px solid ${modelColors[model].primary}`,
+                borderRadius: '8px',
+                boxShadow: 3
+            }}>
                 <CardHeader
                     title={
                         <Box display="flex" alignItems="center">
-                            <Typography variant="h6" component="div">
+                            <Typography variant="h6" component="div" sx={{ color: modelColors[model].contrastText }}>
                                 Количественное распределение
                             </Typography>
                             <Tooltip
@@ -155,28 +171,30 @@ export const ColumnCountChart = ({ model = 'vacancies' }) => {
                                 arrow
                                 placement="right"
                             >
-                                <IconButton size="small" sx={{ ml: 1 }}>
+                                <IconButton size="small" sx={{ ml: 1, color: modelColors[model].contrastText }}>
                                     <InfoIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
                         </Box>
                     }
-                    subheader={`По столбцу: ${columnTranslations[model][column] || column}`}
+                    subheader={
+                        <Typography variant="subtitle1" sx={{ color: modelColors[model].contrastText, opacity: 0.9 }}>
+                            По столбцу: {columnTranslations[model][column] || column}
+                        </Typography>
+                    }
                     action={
-                        <IconButton onClick={clearFilters} color="inherit">
+                        <IconButton onClick={clearFilters} sx={{ color: modelColors[model].contrastText }}>
                             <RefreshIcon />
                         </IconButton>
                     }
                     sx={{
-                        backgroundColor: 'primary.main',
-                        color: 'primary.contrastText',
+                        backgroundColor: modelColors[model].primary,
                         '& .MuiCardHeader-title': {
                             fontWeight: 600,
                             fontSize: '1.25rem'
                         },
                         '& .MuiCardHeader-subheader': {
-                            color: 'primary.contrastText',
-                            opacity: 0.8
+                            opacity: 0.9
                         }
                     }}
                 />

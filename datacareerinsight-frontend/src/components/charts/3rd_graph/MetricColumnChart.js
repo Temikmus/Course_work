@@ -52,7 +52,7 @@ const columnOptions = {
             "employments", "title", "created_at", "updated_at", "age", "gender",
             "salary", "russian_salary", "currency", "photo", "total_experience",
             "citizenship", "area", "level_education", "university", "count_additional_courses",
-             "experience", "language_eng", "language_zho", "schedules",
+            "experience", "language_eng", "language_zho", "schedules",
             "skill_set", "is_driver", "professional_roles"
         ],
         metricColumns: [
@@ -60,6 +60,17 @@ const columnOptions = {
             "count_additional_courses"
         ],
         filtersConfig: resumeFieldsConfig
+    }
+};
+
+const modelColors = {
+    vacancies: {
+        primary: '#8bbaf0',      // Светлый цвет из градиента (было #5d9cec)
+        contrastText: '#ffffff'  // Белый текст
+    },
+    resume: {
+        primary: '#b39ddb',      // Фиолетовый для резюме
+        contrastText: '#ffffff'
     }
 };
 
@@ -71,6 +82,7 @@ FunctionsIcon.propTypes = {
     fontSize: PropTypes.string,
     sx: PropTypes.shape({mr: PropTypes.number})
 };
+
 export const MetricColumnChart = ({ model = 'vacancies' }) => {
     const [metricColumn, setMetricColumn] = useState(columnOptions[model].metricColumns[0]);
     const [column, setColumn] = useState(columnOptions[model].availableColumns[0]);
@@ -131,7 +143,8 @@ export const MetricColumnChart = ({ model = 'vacancies' }) => {
             labels: data.data.labels.map(label => String(label)),
             values: data.data.values,
             countValues: data.data.count_values,
-            title: title
+            title: title,
+            model: model
         };
 
         switch (chartType) {
@@ -146,11 +159,15 @@ export const MetricColumnChart = ({ model = 'vacancies' }) => {
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Card>
+            <Card sx={{
+                border: `2px solid ${modelColors[model].primary}`,
+                borderRadius: '8px',
+                boxShadow: 3
+            }}>
                 <CardHeader
                     title={
                         <Box display="flex" alignItems="center">
-                            <Typography variant="h6" component="div">
+                            <Typography variant="h6" component="div" sx={{ color: modelColors[model].contrastText }}>
                                 Сравнение выбранного показателя по заданному признаку
                             </Typography>
                             <Tooltip
@@ -158,28 +175,30 @@ export const MetricColumnChart = ({ model = 'vacancies' }) => {
                                 arrow
                                 placement="right"
                             >
-                                <IconButton size="small" sx={{ ml: 1 }}>
+                                <IconButton size="small" sx={{ ml: 1, color: modelColors[model].contrastText }}>
                                     <InfoIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
                         </Box>
                     }
-                    subheader={`${columnTranslations[model][metricColumn] || metricColumn} по ${columnTranslations[model][column] || column}`}
+                    subheader={
+                        <Typography variant="subtitle1" sx={{ color: modelColors[model].contrastText, opacity: 0.9 }}>
+                            {columnTranslations[model][metricColumn] || metricColumn} по {columnTranslations[model][column] || column}
+                        </Typography>
+                    }
                     action={
-                        <IconButton onClick={clearFilters} color="inherit">
+                        <IconButton onClick={clearFilters} sx={{ color: modelColors[model].contrastText }}>
                             <RefreshIcon />
                         </IconButton>
                     }
                     sx={{
-                        backgroundColor: 'primary.main',
-                        color: 'primary.contrastText',
+                        backgroundColor: modelColors[model].primary,
                         '& .MuiCardHeader-title': {
                             fontWeight: 600,
                             fontSize: '1.25rem'
                         },
                         '& .MuiCardHeader-subheader': {
-                            color: 'primary.contrastText',
-                            opacity: 0.8
+                            opacity: 0.9
                         }
                     }}
                 />
@@ -259,7 +278,6 @@ export const MetricColumnChart = ({ model = 'vacancies' }) => {
                                 </Select>
                             </FormControl>
                         </Grid>
-
 
                         {/* Тип графика */}
                         <Grid item xs={12} md={2}>

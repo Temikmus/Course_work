@@ -1,20 +1,27 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import { Container } from '@mui/material';
 import Home from './pages/Home';
+import Vacancies from './pages/Vacancies';
 import Resumes from './pages/Resumes';
 import LinearRegression from './pages/LinearRegression';
-import Vacancies from './pages/Vacancies';
-//import Header from './components/Header'; // Если у тебя есть Header
+import ScrollToTop from './components/ScrollToTop';
+
 
 const App = () => {
     return (
         <Router>
-            <Routes>
-                <Route path="/" element={<Home />} />  {/* Главная страница */}
-                <Route path="/resumes" element={<Resumes />} />  {/* Резюме */}
-                <Route path="/linear-regression" element={<LinearRegression />} />  {/* Линейная регрессия */}
-                <Route path="/clustering" element={<Vacancies />} />  {/* Кластеризация */}
-            </Routes>
+            <ScrollToTop />
+            <Header />
+            <Container maxWidth="xl" sx={{ pt:0, pb: 4 }}>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/vacancies" element={<Vacancies />} />
+                    <Route path="/resumes" element={<Resumes />} />
+                    <Route path="/linear-regression" element={<LinearRegression />} />
+                </Routes>
+            </Container>
         </Router>
     );
 };

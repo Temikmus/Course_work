@@ -63,6 +63,17 @@ const columnOptions = {
     }
 };
 
+const modelColors = {
+    vacancies: {
+        primary: '#8bbaf0',      // Светлый цвет из градиента (было #5d9cec)
+        contrastText: '#ffffff'  // Белый текст
+    },
+    resume: {
+        primary: '#b39ddb',      // Фиолетовый для резюме
+        contrastText: '#ffffff'
+    }
+};
+
 export const TimeDistributionChart = ({ model = 'vacancies' }) => {
     const [column, setColumn] = useState(columnOptions[model].availableColumns[0]);
     const [aggregate, setAggregate] = useState('avg');
@@ -148,7 +159,8 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
             countValues: data.data.count_values,
             title: title,
             isNumeric: isNumeric,
-            modeValues: !isNumeric ? data.data.values : null
+            modeValues: !isNumeric ? data.data.values : null,
+            model: model
         };
 
         switch (chartType) {
@@ -163,11 +175,15 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Card>
+            <Card sx={{
+                border: `2px solid ${modelColors[model].primary}`,
+                borderRadius: '8px',
+                boxShadow: 3
+            }}>
                 <CardHeader
                     title={
                         <Box display="flex" alignItems="center">
-                            <Typography variant="h6" component="div">
+                            <Typography variant="h6" component="div" sx={{ color: modelColors[model].contrastText }}>
                                 Распределение по времени
                             </Typography>
                             <Tooltip
@@ -175,28 +191,30 @@ export const TimeDistributionChart = ({ model = 'vacancies' }) => {
                                 arrow
                                 placement="right"
                             >
-                                <IconButton size="small" sx={{ ml: 1 }}>
+                                <IconButton size="small" sx={{ ml: 1, color: modelColors[model].contrastText }}>
                                     <InfoIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
                         </Box>
                     }
-                    subheader={`Анализ столбца: ${columnTranslations[model][column] || column}`}
+                    subheader={
+                        <Typography variant="subtitle1" sx={{ color: modelColors[model].contrastText, opacity: 0.9 }}>
+                            Анализ столбца: {columnTranslations[model][column] || column}
+                        </Typography>
+                    }
                     action={
-                        <IconButton onClick={clearFilters} color="inherit">
+                        <IconButton onClick={clearFilters} sx={{ color: modelColors[model].contrastText }}>
                             <RefreshIcon />
                         </IconButton>
                     }
                     sx={{
-                        backgroundColor: 'primary.main',
-                        color: 'primary.contrastText',
+                        backgroundColor: modelColors[model].primary,
                         '& .MuiCardHeader-title': {
                             fontWeight: 600,
                             fontSize: '1.25rem'
                         },
                         '& .MuiCardHeader-subheader': {
-                            color: 'primary.contrastText',
-                            opacity: 0.8
+                            opacity: 0.9
                         }
                     }}
                 />

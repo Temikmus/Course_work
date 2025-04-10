@@ -6,7 +6,8 @@ const ResumeTable = () => (
         title="Резюме"
         apiEndpoint="http://127.0.0.1:8000/resume/table/"
         fieldsConfig={resumeFieldsConfig}
-        hiddenColumnsByDefault = {["id_resume", "created_at", "salary", "currency", "url"]}
+        hiddenColumnsByDefault={["id_resume", "created_at", "salary", "currency", "url"]}
+        colorTheme="resume" // Используем нежно-красную тему
     />
 );
 

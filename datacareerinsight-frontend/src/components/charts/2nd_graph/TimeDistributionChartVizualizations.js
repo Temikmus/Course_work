@@ -31,128 +31,152 @@ const months = [
     'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
 ];
 
+const colorSchemes = {
+    vacancies: {
+        main: 'rgba(93, 156, 236, 0.7)',      // #5d9cec с прозрачностью (основной цвет)
+        border: 'rgba(59, 120, 204, 1)',      // #3b78cc (более тёмный оттенок)
+        hover: 'rgba(77, 143, 232, 0.8)',     // #4d8fe8 (промежуточный насыщенный)
+        text: '#1a3d6b'                       // Тёмно-синий для контраста
+    },
+    resume: {
+        main: 'rgba(179, 157, 219, 0.7)',     // Оставляем как было (фиолетовая схема)
+        border: 'rgba(149, 117, 205, 1)',
+        hover: 'rgba(156, 126, 211, 0.8)',
+        text: '#512da8'
+    }
+};
+
 const formatDateLabel = (labels) => {
     return labels.map(item => `${months[item.month - 1]} ${item.year}`);
 };
 
-const getTimeOptions = (title, yAxisTitle, isNumeric) => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { display: false },
-        title: {
-            display: true,
-            text: title,
-            font: {
-                size: 16,
-                weight: 'bold',
-                family: "'Roboto', sans-serif"
-            },
-            color: '#2c3e50'
-        },
-        tooltip: {
-            backgroundColor: '#34495e',
-            titleFont: { size: 14 },
-            bodyFont: { size: 12 },
-            padding: 12,
-            cornerRadius: 4,
-            displayColors: false,
-            callbacks: {
-                label: (context) => {
-                    const value = context.raw.y ?? context.raw;
-                    const count = context.dataset.countValues?.[context.dataIndex];
-                    const modeValue = context.dataset.modeValues?.[context.dataIndex];
+const getTimeOptions = (title, yAxisTitle, isNumeric, model = 'vacancies') => {
+    const colors = colorSchemes[model] || colorSchemes.vacancies;
 
-                    if (isNumeric) {
-                        return [
-                            `Значение: ${Number(value).toLocaleString()}`,
-                            `Наблюдений с этим значением: ${count}`
-                        ];
-                    } else {
-                        return [
-                            `Мода: ${modeValue}`,
-                            `Наблюдений с этим значением: ${count}`
-                        ];
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            title: {
+                display: true,
+                text: title,
+                font: {
+                    size: 16,
+                    weight: 'bold',
+                    family: "'Roboto', sans-serif"
+                },
+                color: colors.text
+            },
+            tooltip: {
+                backgroundColor: '#34495e',
+                titleFont: { size: 14 },
+                bodyFont: { size: 12 },
+                padding: 12,
+                cornerRadius: 4,
+                displayColors: false,
+                callbacks: {
+                    label: (context) => {
+                        const value = context.raw.y ?? context.raw;
+                        const count = context.dataset.countValues?.[context.dataIndex];
+                        const modeValue = context.dataset.modeValues?.[context.dataIndex];
+
+                        if (isNumeric) {
+                            return [
+                                `Значение: ${Number(value).toLocaleString()}`,
+                                `Наблюдений с этим значением: ${count}`
+                            ];
+                        } else {
+                            return [
+                                `Мода: ${modeValue}`,
+                                `Наблюдений с этим значением: ${count}`
+                            ];
+                        }
                     }
                 }
             }
-        }
-    },
-    scales: {
-        x: {
-            title: {
-                display: true,
-
-                font: {
-                    size: 14,
-                    weight: 'bold',
-                    family: "'Roboto', sans-serif"
-                },
-                color: '#2c3e50'
-            },
-            ticks: {
-                font: {
-                    size: 12,
-                    family: "'Roboto', sans-serif"
-                },
-                maxRotation: 45,
-                minRotation: 45
-            }
         },
-        y: {
-            title: {
-                display: true,
-                text: yAxisTitle,
-                font: {
-                    size: 14,
-                    weight: 'bold',
-                    family: "'Roboto', sans-serif"
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    font: {
+                        size: 14,
+                        weight: 'bold',
+                        family: "'Roboto', sans-serif"
+                    },
+                    color: colors.text
                 },
-                color: '#2c3e50'
+                ticks: {
+                    font: {
+                        size: 12,
+                        family: "'Roboto', sans-serif"
+                    },
+                    color: colors.text,
+                    maxRotation: 45,
+                    minRotation: 45
+                }
             },
-            ticks: {
-                font: {
-                    size: 12,
-                    family: "'Roboto', sans-serif"
+            y: {
+                title: {
+                    display: true,
+                    text: yAxisTitle,
+                    font: {
+                        size: 14,
+                        weight: 'bold',
+                        family: "'Roboto', sans-serif"
+                    },
+                    color: colors.text
                 },
-                callback: isNumeric ? (value) => Number(value).toLocaleString() : undefined
-            },
-            beginAtZero: true
+                ticks: {
+                    font: {
+                        size: 12,
+                        family: "'Roboto', sans-serif"
+                    },
+                    color: colors.text,
+                    callback: isNumeric ? (value) => Number(value).toLocaleString() : undefined
+                },
+                beginAtZero: true
+            }
         }
-    }
-});
-
-export const TimeBarChart = ({ labels, values, countValues, title, isNumeric, modeValues }) => {
-    const data = {
-        labels: formatDateLabel(labels),
-        datasets: [{
-            label: title,
-            data: isNumeric ? values.map(Number) : countValues, // Для числовых - значения, для нечисловых - количество
-            backgroundColor: isNumeric ? 'rgba(54, 162, 235, 0.7)' : 'rgba(255, 159, 64, 0.7)',
-            borderColor: isNumeric ? 'rgba(54, 162, 235, 1)' : 'rgba(255, 159, 64, 1)',
-            borderWidth: 1,
-            borderRadius: 4,
-            hoverBackgroundColor: isNumeric ? 'rgba(54, 162, 235, 0.9)' : 'rgba(255, 159, 64, 0.9)',
-            countValues: countValues,
-            modeValues: !isNumeric ? values : null // Для тултипов
-        }]
     };
-
-    const yAxisTitle = isNumeric ? title : 'Количество наблюдений с этим значением';
-    return <Bar data={data} options={getTimeOptions(title, yAxisTitle, isNumeric)} />;
 };
 
-export const TimeLineChart = ({ labels, values, countValues, title, isNumeric, modeValues }) => {
+export const TimeBarChart = ({ labels, values, countValues, title, isNumeric, modeValues, model = 'vacancies' }) => {
+    const colors = colorSchemes[model] || colorSchemes.vacancies;
+
     const data = {
         labels: formatDateLabel(labels),
         datasets: [{
             label: title,
             data: isNumeric ? values.map(Number) : countValues,
-            borderColor: isNumeric ? 'rgba(52, 152, 219, 1)' : 'rgba(155, 89, 182, 1)',
-            backgroundColor: isNumeric ? 'rgba(52, 152, 219, 0.1)' : 'rgba(155, 89, 182, 0.1)',
+            backgroundColor: colors.main,
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: 4,
+            hoverBackgroundColor: colors.hover,
+            countValues: countValues,
+            modeValues: !isNumeric ? values : null
+        }]
+    };
+
+    const yAxisTitle = isNumeric ? title : 'Количество наблюдений с этим значением';
+    return <Bar data={data} options={getTimeOptions(title, yAxisTitle, isNumeric, model)} />;
+};
+
+export const TimeLineChart = ({ labels, values, countValues, title, isNumeric, modeValues, model = 'vacancies' }) => {
+    const colors = colorSchemes[model] || colorSchemes.vacancies;
+
+    const data = {
+        labels: formatDateLabel(labels),
+        datasets: [{
+            label: title,
+            data: isNumeric ? values.map(Number) : countValues,
+            borderColor: colors.border,
+            backgroundColor: colors.main,
             tension: 0.3,
             fill: true,
-            pointBackgroundColor: isNumeric ? 'rgba(52, 152, 219, 1)' : 'rgba(155, 89, 182, 1)',
+            pointBackgroundColor: colors.border,
             pointRadius: 5,
             pointHoverRadius: 7,
             borderWidth: 2,
@@ -162,26 +186,25 @@ export const TimeLineChart = ({ labels, values, countValues, title, isNumeric, m
     };
 
     const yAxisTitle = isNumeric ? title : 'Количество наблюдений с этим значением';
-    return <Line data={data} options={getTimeOptions(title, yAxisTitle, isNumeric)} />;
+    return <Line data={data} options={getTimeOptions(title, yAxisTitle, isNumeric, model)} />;
 };
 
-
-
-export const TimeScatterChart = ({ labels, values, countValues, title, isNumeric, modeValues }) => {
+export const TimeScatterChart = ({ labels, values, countValues, title, isNumeric, modeValues, model = 'vacancies' }) => {
+    const colors = colorSchemes[model] || colorSchemes.vacancies;
     const formattedLabels = formatDateLabel(labels);
 
     const scatterData = labels.map((_, index) => ({
-        x: index, // Оставляем индекс для позиционирования
+        x: index,
         y: isNumeric ? Number(values[index]) : countValues[index]
     }));
 
     const data = {
-        labels: formattedLabels, // Добавляем labels для использования в ticks
+        labels: formattedLabels,
         datasets: [{
             label: title,
             data: scatterData,
-            backgroundColor: 'rgba(231, 76, 60, 0.7)',
-            borderColor: 'rgba(192, 57, 43, 1)',
+            backgroundColor: colors.main,
+            borderColor: colors.border,
             pointRadius: 6,
             pointHoverRadius: 8,
             showLine: isNumeric,
@@ -193,26 +216,26 @@ export const TimeScatterChart = ({ labels, values, countValues, title, isNumeric
     };
 
     const options = {
-        ...getTimeOptions(title, isNumeric ? title : 'Количество наблюдений с этим значением', isNumeric),
+        ...getTimeOptions(title, isNumeric ? title : 'Количество наблюдений с этим значением', isNumeric, model),
         scales: {
             x: {
                 type: 'category',
-                labels: formattedLabels, // Используем отформатированные даты
+                labels: formattedLabels,
                 title: {
                     display: true,
-
                     font: {
                         size: 14,
                         weight: 'bold',
                         family: "'Roboto', sans-serif"
                     },
-                    color: '#2c3e50'
+                    color: colors.text
                 },
                 ticks: {
                     font: {
                         size: 12,
                         family: "'Roboto', sans-serif"
                     },
+                    color: colors.text,
                     maxRotation: 45,
                     minRotation: 45
                 }
@@ -226,7 +249,7 @@ export const TimeScatterChart = ({ labels, values, countValues, title, isNumeric
                         weight: 'bold',
                         family: "'Roboto', sans-serif"
                     },
-                    color: '#2c3e50'
+                    color: colors.text
                 },
                 beginAtZero: true
             }
